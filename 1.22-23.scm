@@ -47,11 +47,14 @@
     (search-for-primes (+ 2 start) range))
    (else '())))
 
+(use-modules (statprof))
+(statprof (search-for-primes 1000 3))
+
 (define (start-search-for-prime start-time start range)
   (search-for-primes start range)
   (display (- (runtime) start-time)))
 
-(start-search-for-prime (runtime) 90000000000000 10) ; => 17 seconds
+; (start-search-for-prime (runtime) 90000000000000 10) ; => 17 seconds
 
 ;; Exercise 1.23
 
@@ -69,6 +72,10 @@
                n 
                (next test-divisor)))))
 
-(start-search-for-prime (runtime) 90000000000000 10); => 11 seconds
+; (start-search-for-prime (runtime) 90000000000000 10); => 11 seconds
 ;; not quite twice as fast but almost there
 ;; It is different than 2 because next computes the value of input conditionally each time.
+
+;; Exercise 1.24
+
+;; To be able to analyse the results of 1.22, there needs to be a way to count in micro / milliseconds in Guile
