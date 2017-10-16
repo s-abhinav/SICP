@@ -109,23 +109,55 @@ sample-message
 		    (make-leaf-set (cdr pairs))))))
 
 ;;; From Exercise 2.38
-(define (accumulate op initial sequence)
-  (if (null? sequence)
-      initial
-      (op (car sequence)
-	  (accumulate op initial (cdr sequence)))))
-
-;;; From Exercise 2.38
-(define fold-right accumulate)
+(define (fold-left op initial sequence)
+  (define (iter result rest)
+    (if (null? rest)
+	result
+	(iter (op result (car rest))
+	      (cdr rest))))
+  (iter initial sequence))
 
 (define (generate-huffman-tree pairs)
   (successive-merge (make-leaf-set pairs)))
 
 (define (successive-merge leaf-set)
-  (fold-right make-code-tree (car leaf-set) (cdr leaf-set)))
+  (fold-left make-code-tree (car leaf-set) (cdr leaf-set)))
 
 (define generated-tree (generate-huffman-tree '((A 8) (B 2) (D 1) (C 1))))
 
 (decode (encode '(A D A B B C A) generated-tree) generated-tree)
 
 ;;; => (A D A B B C A)
+
+;;; Exercise 2.70
+(define 1950-lyrics-huffman-tree
+ (generate-huffman-tree '(
+			  (A 2)
+			  (BOOM 1)
+			  (GET 2)
+			  (JOB 2)
+			  (NA 16)
+			  (SHA 3)
+			  (YIP 9)
+			  (WAH 1))))
+
+(define lyrics '(
+		 GET A JOB
+		     SHA NA NA NA NA NA NA NA NA
+		     GET A JOB
+		     SHA NA NA NA NA NA NA NA NA
+		     WAH YIP YIP YIP YIP YIP YIP YIP YIP YIP
+		     SHA BOOM
+		     ))
+
+(length (encode lyrics 1950-lyrics-huffman-tree))
+
+;;; => 87
+
+#|
+Since there are 8 symbols, the number of bits required for encoding is defined
+by 2^n = 8 where n is 3.
+The number of symbols in the song is 36.
+Therefore, the number of bits required for the fixed-length code to encode this
+song would be 36 * 3 which is 108.
+|#
