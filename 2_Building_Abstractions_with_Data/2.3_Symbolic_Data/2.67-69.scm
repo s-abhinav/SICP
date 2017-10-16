@@ -92,3 +92,40 @@ sample-message
 
 (decode (encode '(A D A B B C A) sample-tree) sample-tree)
 ;;; => (A D A B B C A)
+
+;;; Exercise 2.69
+(define (adjoin-set x set)
+  (cond ((null? set) (list x))
+	((< (weight x) (weight (car set))) (cons x set))
+	(else (cons (car set)
+		    (adjoin-set x (cdr set))))))
+
+(define (make-leaf-set pairs)
+  (if (null? pairs)
+      '()
+      (let ((pair (car pairs)))
+	(adjoin-set (make-leaf (car pair)    ; symbol
+			       (cadr pair))  ; frequency
+		    (make-leaf-set (cdr pairs))))))
+
+;;; From Exercise 2.38
+(define (accumulate op initial sequence)
+  (if (null? sequence)
+      initial
+      (op (car sequence)
+	  (accumulate op initial (cdr sequence)))))
+
+;;; From Exercise 2.38
+(define fold-right accumulate)
+
+(define (generate-huffman-tree pairs)
+  (successive-merge (make-leaf-set pairs)))
+
+(define (successive-merge leaf-set)
+  (fold-right make-code-tree (car leaf-set) (cdr leaf-set)))
+
+(define generated-tree (generate-huffman-tree '((A 8) (B 2) (D 1) (C 1))))
+
+(decode (encode '(A D A B B C A) generated-tree) generated-tree)
+
+;;; => (A D A B B C A)
