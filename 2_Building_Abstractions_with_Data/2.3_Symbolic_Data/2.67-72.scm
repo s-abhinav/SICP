@@ -197,3 +197,18 @@ n - 1 bits.
 
 The tree for size 10 will have the same pattern as 5.
 |#
+
+#|
+Exercise 2.72
+Part 1.
+1. in-set? uses O(n).
+2. At worst, the encode-symbol procedure should iterate 3 times to encode a symbol, which
+   is O(n-1) which is almost O(n).
+The order of growth is O(n²).
+
+Part 2.
+For the most frequent symbol, encode-symbol would call in-left?, and if nothing is found, would then call in-right?. At worst, this would take O(n) and at best, O(1).
+encode-symbol itself would need to run once, without any iteration, since the most frequent symbol is found in the top branch. This takes O(1). At best, it would take O(1) and at worst, O(n) to encode the symbol.
+
+For the least frequent symbol, in-set? would take O(n) to look for the symbol and encode-symbol would also take O(n) to construct the bits. The order of growth would hence be O(n²).
+|#
