@@ -161,3 +161,39 @@ The number of symbols in the song is 36.
 Therefore, the number of bits required for the fixed-length code to encode this
 song would be 36 * 3 which is 108.
 |#
+
+;;; Exercise 2.71
+
+(define 5-symbols-huffman-tree
+  (generate-huffman-tree
+   '(
+     (A 1)
+     (B 2)
+     (C 4)
+     (D 8)
+     (E 16))))
+
+;;; => (((((leaf A 1) (leaf B 2) (A B) 3) (leaf C 4) (A B C) 7) (leaf D 8) (A B C D) 15) (leaf E 16) (A B C D E) 31)
+
+#|
+
+                           {A B C D E} 31
+                                 *
+                                / \
+                               /   \
+                 {A B C D} 15 *    E 16
+                     ________/ \________
+                    /                   \
+         {A B C} 7 *                     D 8
+            ______/ \_____
+          /               \
+ {A B} 3 *                 C 4
+        / \
+       /   \
+     A 1   B 2        
+
+The most frequent symbol requires 1 bit and the least frequent symbol requires
+n - 1 bits.
+
+The tree for size 10 will have the same pattern as 5.
+|#
