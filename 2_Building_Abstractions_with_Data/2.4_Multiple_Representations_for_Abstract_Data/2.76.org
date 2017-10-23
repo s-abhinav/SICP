@@ -1,0 +1,41 @@
+* Exercise 2.76
+
+As a large system with generic operations
+evolves, new types of data objects or new operations may be needed.
+For each of the three strategies--generic operations with explicit
+dispatch, data-directed style, and message-passing-style--describe
+the changes that must be made to a system in order to add new
+types or new operations.  Which organization would be most
+appropriate for a system in which new types must often be added?
+Which would be most appropriate for a system in which new
+operations must often be added?
+
+** Part 1
+*** Strategy 1 - Generic Operations
+In this strategy, if there is a need to add a new type, then
+every generic procedure would have to be modified to cater
+for the new type. For example in the procedure
+#+BEGIN_SRC scheme
+(define (real-part z)
+  (cond ((rectangular? z)
+	 (real-part-rectangular (contents z)))
+	((polar? z)
+	 (real-part-polar (contents z)))
+	((new-type? z) ;; This conditional has to be added for all procedures
+	 (real-part-new-type (contents z)))
+	(else (error "Unknown type -- REAL-PART" z))))
+#+END_SRC
+
+*** Strategy 2 - Data Directed
+Every package installation code has to be modified to accomodate the new
+operations. To add a new type, only a new package installation procedure
+has to be created while not having to update the other installation
+packages.
+
+*** Strategy 3 - Message Passing
+Adding a new type does not affect existing code, similar to Strategy 2.
+Adding a new operation to the system would require every type to get
+updated with the new operation.
+
+** Part 2
+Both Strategy 2 and 3 would be appropriate for both kind of evolution.
