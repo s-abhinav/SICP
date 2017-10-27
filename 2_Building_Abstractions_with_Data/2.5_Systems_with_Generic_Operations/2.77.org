@@ -1,0 +1,69 @@
+* Exercise 2.77
+Louis Reasoner tries to evaluate the expression (magnitude z) where z is the object shown in Figure 2.24. To his surprise, instead of the answer 5 he gets an error message from apply-generic, saying there is no method for the operation magnitude on the types (complex). He shows this interaction to Alyssa P. Hacker, who says “The problem is that the complex-number selectors were never defined for complex numbers, just for polar and rectangular numbers. All you have to do to make this work is add the following to the complex package:”
+#+BEGIN_SRC scheme
+(put 'real-part '(complex) real-part)
+(put 'imag-part '(complex) imag-part)
+(put 'magnitude '(complex) magnitude)
+(put 'angle '(complex) angle)
+#+END_SRC
+
+**** Describe in detail why this works. As an example, trace through all the procedures called in evaluating the expression (magnitude z) where z is the object shown in Figure 2.24. 
+The procedure ~magnitude~ is defined as
+
+#+BEGIN_SRC scheme
+(define (magnitude z) (apply-generic 'magnitude z))
+#+END_SRC
+
+where ~apply-generic~ applies the operation to the data object. 
+
+In Louis's case, the operation ~magnitude~ is not found in the data object. By adding the ~magnitude~ operation along with ~real-part~, ~imag-part~ and ~angle~ operations which ~magnitude~ depends on, it allows the data object to fetch the ~magnitude~ operation from the table of operations. 
+
+When ~(magnitude z)~ is called, 
+1. The procedure 
+   #+BEGIN_SRC scheme
+     (define (magnitude z) 
+       (apply-generic 'magnitude z))
+   #+END_SRC
+   is called.
+2. Then the ~apply-generic~ procedure
+   #+BEGIN_SRC scheme
+     (define (apply-generic op . args)
+       (let ((type-tags (map type-tag args)))
+         (let ((proc (get op type-tags)))
+           (if proc
+               (apply proc (map contents args))
+               (error
+                "No method for these types: 
+                  APPLY-GENERIC"
+                (list op type-tags))))))
+   #+END_SRC
+   is called with ~(apply-generic 'magnitude z)~
+3. ~type-tags~ is assigned a list of type-tag available from z.
+   In this case, the list ~'(complex)~ will be returned.
+4. ~proc~ is assigned ~(get 'magnitude '(complex))~ which is
+   ~magnitude~
+5. Then ~(apply magnitude (list (contents z)))~ is called which evaluates to apply the magnitude procedure to the rectangular data object where z is the complex object.
+6. This in turn, evaluates to (magnitude rectangular-data). 
+   Again, the process from step 1. repeats until step 6.
+   - (apply-generic 'magnitude rectangular-data)
+   - ~type-tags~ is assigned the ~(list (rectangular))~
+   - ~proc~ is assigned ~(get 'magnitude '(rectangular))~ which is
+     #+BEGIN_SRC scheme
+       (define (magnitude z)
+         (sqrt (+ (square (real-part z))
+                  (square (imag-part z)))))
+     #+END_SRC
+   - ~(apply magnitude (list (contents rectangular-data)))~ is called
+     which evaluates to apply the new magnitude procedure to the rectangular data. The ~real-part~ and ~imag-part~ procedures will be retrieved using the same process but will be done on the rectangular data instead of z.
+
+**** In particular, how many times is apply-generic invoked? What procedure is dispatched to in each case?
+4 times.
+Two for magnitude and two more for the last magnitude for real-part
+and imag-part.
+Since the Scheme interpreter uses the applicative-order evaluation [fn:1] the square procedure will call real-part or imag-part once.
+
+* Footnotes
+
+[fn:1] *1.1.5 The Substitution Model for Procedure Application*
+This alternative “fully expand and then reduce” evaluation method is known as normal-order evaluation, in contrast to the “evaluate the arguments and then apply” method that the interpreter actually uses, which is called applicative-order evaluation.
+
