@@ -1,0 +1,51 @@
+* Exercise 3.1
+An accumulator is a procedure that is called repeatedly with a single numeric argument and accumulates its arguments into a sum. Each time it is called, it returns the currently accumulated sum. Write a procedure make-accumulator that generates accumulators, each maintaining an independent sum. The input to make-accumulator should specify the initial value of the sum; for example
+
+#+BEGIN_SRC scheme :results silent
+  (define A (make-accumulator 5))
+
+  (A 10)
+  15
+
+  (A 10)
+  25
+#+END_SRC
+
+* Solution
+#+BEGIN_SRC scheme :results silent :session acc
+  (define (make-accumulator initialvalue)
+    (define value initialvalue)
+    (lambda (x)
+      (set! value (+ value x))
+      value))
+#+END_SRC
+
+#+RESULTS:
+
+Define an instance of make-accumulator
+
+#+BEGIN_SRC scheme :results silent :session acc
+(define A (make-accumulator 5))
+#+END_SRC
+
+Add 10
+
+#+BEGIN_SRC scheme :session acc
+(A 10)
+#+END_SRC
+
+#+RESULTS:
+
+: 15
+
+Add 10 again
+
+#+BEGIN_SRC scheme :session acc
+(A 10)
+#+END_SRC
+
+#+RESULTS:
+
+: 25
+
+
