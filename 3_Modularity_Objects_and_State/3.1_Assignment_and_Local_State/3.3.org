@@ -38,3 +38,53 @@ The resulting account object should process a request only if it is accompanied 
 #+END_SRC
 
 * Solution
+Define a wrong-password procedure with one argument to be discarded.
+If this procedure is not dispatched, by only returning a string in the dispatch procedure, the value in the ~((acc 'some-other-password 'deposit) 50)~ call will cause 50 to be applied to the "Incorrect password" string.
+
+#+BEGIN_SRC scheme :session make-acc :results silent
+  (define (make-account balance password)
+    (define stored-password password)
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance 
+                       (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+
+    (define (wrong-password amount)
+      "Incorrect password")
+    
+    (define (dispatch p m)
+      (if (eq? p stored-password)
+       (cond ((eq? m 'withdraw) withdraw)
+             ((eq? m 'deposit) deposit)
+             (else (error "Unknown request: 
+                   MAKE-ACCOUNT" m)))
+       wrong-password))
+    dispatch)
+#+END_SRC
+
+Define an account
+#+BEGIN_SRC scheme :session make-acc :results silent
+  (define acc (make-account 100 'secret-password))
+#+END_SRC
+
+Withdraw with a correct password
+#+BEGIN_SRC scheme :session make-acc :exports both
+  ((acc 'secret-password 'withdraw) 40)
+#+END_SRC
+
+#+RESULTS:
+: 60
+
+Deposit with an incorrect password
+#+BEGIN_SRC scheme :session make-acc :exports both 
+  ((acc 'some-other-password 'deposit) 50)
+#+END_SRC
+
+#+RESULTS:
+: Incorrect password
+
