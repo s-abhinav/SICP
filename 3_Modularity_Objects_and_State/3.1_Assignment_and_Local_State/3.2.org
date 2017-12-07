@@ -14,7 +14,7 @@ In software-testing applications, it is useful to be able to count the number of
 
 * Solution
 
-#+BEGIN_SRC scheme :session acc :results silent
+#+BEGIN_SRC scheme :session make-monitored :results silent
   (define (make-monitored f)
     (define count 0)
 
@@ -38,28 +38,28 @@ In software-testing applications, it is useful to be able to count the number of
 
 ** Call s 3 times
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 10)
 #+END_SRC
 
 #+RESULTS:
 : 100
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 5)
 #+END_SRC
 
 #+RESULTS:
 : 25
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 3)
 #+END_SRC
 
 #+RESULTS:
 : 9
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 'how-many-calls?)
 #+END_SRC
 
@@ -68,13 +68,13 @@ In software-testing applications, it is useful to be able to count the number of
 
 ** Reset the count
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 'reset-count)
 #+END_SRC
 
 #+RESULTS:
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 'how-many-calls?)
 #+END_SRC
 
@@ -83,14 +83,14 @@ In software-testing applications, it is useful to be able to count the number of
 
 ** Call once
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 2)
 #+END_SRC
 
 #+RESULTS:
 : 4
 
-#+BEGIN_SRC scheme :session acc :exports both
+#+BEGIN_SRC scheme :session make-monitored :exports both
   (s 'how-many-calls?)
 #+END_SRC
 
