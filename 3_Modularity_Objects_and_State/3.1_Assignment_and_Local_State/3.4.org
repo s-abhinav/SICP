@@ -1,0 +1,71 @@
+#+TITLE: Exercise 3.4
+Modify the make-account procedure of Exercise 3.3 by adding another local state variable so that, if an account is accessed more than seven consecutive times with an incorrect password, it invokes the procedure call-the-cops.
+
+* Solution
+
+#+BEGIN_SRC scheme :session make-acc-3.4 :results silent
+  (define (make-account balance password)
+    (define stored-password password)
+    (define incorrect-password-count 0)
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance 
+                       (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+
+    (define (wrong-password amount)
+      (set! incorrect-password-count (+ 1 incorrect-password-count))
+      (cond ((> incorrect-password-count 7) (call-the-cops))
+            (else "Incorrect password")))
+
+    (define (call-the-cops)
+      "Calling the cops ...")
+    
+    (define (dispatch p m)
+      (if (eq? p stored-password)
+       (cond ((eq? m 'withdraw) withdraw)
+             ((eq? m 'deposit) deposit)
+             (else (error "Unknown request: 
+                   MAKE-ACCOUNT" m)))
+       wrong-password))
+    dispatch)
+#+END_SRC
+
+Define an account
+#+BEGIN_SRC scheme :session make-acc-3.4 :exports both
+  (define acc (make-account 100 'secret-password))
+#+END_SRC 
+
+#+RESULTS:
+
+Withdraw 6 times with a wrong password
+#+BEGIN_SRC scheme :session make-acc-3.4 :results silent
+  ((acc 'guess-password 'withdraw) 40)
+  ((acc 'guess-password 'withdraw) 40)
+  ((acc 'guess-password 'withdraw) 40)
+  ((acc 'guess-password 'withdraw) 40)
+  ((acc 'guess-password 'withdraw) 40)
+  ((acc 'guess-password 'withdraw) 40)
+#+END_SRC 
+
+Withdraw 7th time with a wrong password
+#+BEGIN_SRC scheme :session make-acc-3.4 :exports both
+  ((acc 'guess-password 'withdraw) 40)
+#+END_SRC 
+
+#+RESULTS:
+: Incorrect password
+
+
+Withdraw 8th time with a wrong password
+#+BEGIN_SRC scheme :session make-acc-3.4 :exports both
+  ((acc 'guess-password 'withdraw) 40)
+#+END_SRC 
+
+#+RESULTS:
+: Calling the cops ...
+
