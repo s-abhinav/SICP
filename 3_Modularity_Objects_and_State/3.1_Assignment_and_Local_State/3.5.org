@@ -1,0 +1,112 @@
+#+TITLE: Exercise 3.5
+ /Monte Carlo integration/ is a method of estimating definite integrals by means of Monte Carlo simulation. Consider computing the area of a region of space described by a predicate P(x,y) that is true for points (x,y) in the region and false for points not in the region. For example, the region contained within a circle of radius 3 centered at (5, 7) is described by the predicate that tests whether (x−5)²+(y−7)²≤3². To estimate the area of the region described by such a predicate, begin by choosing a rectangle that contains the region. For example, a rectangle with diagonally opposite corners at (2, 4) and (8, 10) contains the circle above. The desired integral is the area of that portion of the rectangle that lies in the region. We can estimate the integral by picking, at random, points (x,y) that lie in the rectangle, and testing P(x,y) for each point to determine whether the point lies in the region. If we try this with many points, then the fraction of points that fall in the region should give an estimate of the proportion of the rectangle that lies in the region. Hence, multiplying this fraction by the area of the entire rectangle should produce an estimate of the integral.
+
+ Implement Monte Carlo integration as a procedure estimate-integral that takes as arguments a predicate P, upper and lower bounds x1, x2, y1, and y2 for the rectangle, and the number of trials to perform in order to produce the estimate. Your procedure should use the same monte-carlo procedure that was used above to estimate π. Use your estimate-integral to produce an estimate of π by measuring the area of a unit circle.
+
+ You will find it useful to have a procedure that returns a number chosen at random from a given range. The following random-in-range procedure implements this in terms of the random procedure used in 1.2.6, which returns a nonnegative number less than its input.
+
+
+#+BEGIN_SRC scheme :session monte-carlo :exports both
+  (define (rand) (random 100000))
+
+  (define (estimate-pi trials)
+    (sqrt (/ 6 (monte-carlo trials 
+                            cesaro-test))))
+  (define (cesaro-test)
+     (= (gcd (rand) (rand)) 1))
+
+  (define (monte-carlo trials experiment)
+    (define (iter trials-remaining trials-passed)
+      (cond ((= trials-remaining 0)
+             (/ trials-passed trials))
+            ((experiment)
+             (iter (- trials-remaining 1) 
+                   (+ trials-passed 1)))
+            (else
+             (iter (- trials-remaining 1) 
+                   trials-passed))))
+    (iter trials 0))
+
+  (estimate-pi 10000000)
+#+END_SRC
+
+#+RESULTS:
+: 3.141748993361409
+
+#+BEGIN_SRC scheme :session monte-carlo :results silent
+  (define (random-in-range low high)
+    (let ((range (- high low)))
+      (+ low (random range))))
+#+END_SRC
+
+Define a ~range~ procedure to test the ~random-in-range~ procedure
+#+BEGIN_SRC scheme :session monte-carlo :results silent
+  (define (range start end)
+    (cond ((= start end) (cons end '()))
+          (else
+           (cons start (range (+ 1 start) end)))))
+#+END_SRC
+
+Test range
+#+BEGIN_SRC scheme :session monte-carlo :results value table :exports both
+  (range 1 10)
+#+END_SRC
+
+#+RESULTS:
+| 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 |
+
+Test random-in-range
+#+BEGIN_SRC scheme :session monte-carlo :results value list :exports both
+  (map (lambda (x)
+         (random-in-range 1.0 10))
+       (range 1 20))
+#+END_SRC
+
+#+RESULTS:
+- 5.613507978658584
+- 7.3816443283630635
+- 6.7636275738064215
+- 9.458629362943253
+- 2.497791521087077
+- 2.8935445505164346
+- 5.183958319728577
+- 8.584218176756442
+- 3.8172378644167018
+- 4.6706507262772385
+- 5.123253202641058
+- 3.4766214618003572
+- 7.300322053585656
+- 8.605784355955013
+- 9.702156345605994
+- 4.384856896204673
+- 6.915482945846483
+- 6.243983689415317
+- 8.682844007554111
+- 1.5904257744186499
+
+* Solution
+
+#+BEGIN_SRC scheme :session monte-carlo :results silent
+  (define (square x)
+    (* x x))
+
+  (define (P x y)
+    (let ((left-hand-side (+
+                           (square (- x 5))
+                           (square (- y 7)))))
+      (or (< left-hand-side (square 3)) (= left-hand-side (square 3)))))
+
+  (define (P-test)
+    (P (random-in-range 2.0 8) (random-in-range 4.0 10)))
+#+END_SRC
+
+Use the equation π = f.6² / 3² where f is the value of region-estimate-pi
+#+BEGIN_SRC scheme :session monte-carlo :exports both
+  (define (region-estimate-pi trials)
+    (/ (* (monte-carlo trials P-test) (square 6)) (square 3.0)))
+
+  (region-estimate-pi 10000000)
+#+END_SRC
+
+#+RESULTS:
+: 3.1415344
