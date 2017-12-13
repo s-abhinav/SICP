@@ -1,0 +1,126 @@
+#+TITLE: Exercise 3.7
+ Consider the bank account objects created by make-account, with the password modification described in Exercise 3.3. Suppose that our banking system requires the ability to make joint accounts. Define a procedure make-joint that accomplishes this. Make-joint should take three arguments. The first is a password-protected account. The second argument must match the password with which the account was defined in order for the make-joint operation to proceed. The third argument is a new password. Make-joint is to create an additional access to the original account using the new password. For example, if peter-acc is a bank account with password open-sesame, then
+
+#+BEGIN_SRC scheme :eval no
+  (define paul-acc
+   (make-joint peter-acc 
+               'open-sesame 
+               'rosebud))
+#+END_SRC 
+
+ will allow one to make transactions on peter-acc using the name paul-acc and the password rosebud. You may wish to modify your solution to Exercise 3.3 to accommodate this new feature.
+
+* Solution
+#+BEGIN_SRC scheme :session make-acc-joint :results silent
+  (define (make-account balance password)
+    (define stored-password password)
+    (define (withdraw amount)
+      (if (>= balance amount)
+          (begin (set! balance 
+                       (- balance amount))
+                 balance)
+          "Insufficient funds"))
+    (define (deposit amount)
+      (set! balance (+ balance amount))
+      balance)
+
+    (define (wrong-password amount)
+      "Incorrect password")
+
+    (define (dispatch p m)
+      (if (eq? p stored-password)
+       (cond ((eq? m 'withdraw) withdraw)
+             ((eq? m 'deposit) deposit)
+             ((eq? m 'validate-password) 'true)
+             (else (error "Unknown request: 
+                   MAKE-ACCOUNT" m)))
+       wrong-password))
+    dispatch)
+#+END_SRC
+
+Test validate password
+#+BEGIN_SRC scheme :session make-acc-joint :exports both :results value
+  (define acc (make-account 100 'test-password))
+  (acc 'test-password 'validate-password)
+#+END_SRC
+
+#+RESULTS:
+: true
+
+Define make-joint. 
+Verify the second owner's password first.
+The (lambda (x y)) expression mimics the make-account's dispatch procedure by taking in two arguments x and y, where x is the password and y is symbol of the operation to be performed on the account. In this case, x is verified as the password of the second owner first before invoking the account procedure with the stored password of the first owner. Again, returning the Invalid Password string needs to be wrapped in a procedure so that the string does not apply the account procedure value to itself.
+#+BEGIN_SRC scheme :session make-acc-joint :results silent
+  (define (make-joint account password second-password)
+    (define stored-password password)
+    (if (eq? 'true (account password 'validate-password))
+        (lambda (x y)
+          (if (eq? x second-password)
+              (account stored-password y)
+              (lambda (z) "Invalid Password")))
+        '()))
+
+  (define peter-acc (make-account 100 'peter-password))
+
+  (define paul-acc (make-joint peter-acc 'peter-password 'paul-password))
+#+END_SRC
+
+* Tests
+
+** Passwords
+Test first owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((peter-acc 'peter-password 'withdraw) 10)
+#+END_SRC
+
+#+EXPORTS:
+: 90
+
+Test second owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((paul-acc 'paul-password 'withdraw) 5)
+#+END_SRC
+
+#+RESULTS:
+: 85
+
+Test with invalid password with second owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((paul-acc 'paul-invalid 'withdraw) 5)
+#+END_SRC
+
+#+RESULTS:
+: Invalid Password
+
+First owner tries to login with the password of the second owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((peter-acc 'paul-password 'withdraw) 0)
+#+END_SRC
+
+#+RESULTS:
+: Incorrect password
+
+Second owner tries to login with the password of the first owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((paul-acc 'peter-password 'withdraw) 0)
+#+END_SRC
+
+#+RESULTS:
+: Invalid Password
+
+** Account states
+Test deposit from second owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((paul-acc 'paul-password 'deposit) 20)
+#+END_SRC
+
+#+RESULTS:
+: 105
+
+Test balance from first owner
+#+BEGIN_SRC scheme :session make-acc-joint :exports both
+  ((peter-acc 'peter-password 'deposit) 0)
+#+END_SRC
+
+#+RESULTS:
+: 105
