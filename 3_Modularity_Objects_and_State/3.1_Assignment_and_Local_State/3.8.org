@@ -1,0 +1,55 @@
+#+TITLE: Exercise 3.8
+ When we defined the evaluation model in 1.1.3, we said that the first step in evaluating an expression is to evaluate its subexpressions. But we never specified the order in which the subexpressions should be evaluated (e.g., left to right or right to left). When we introduce assignment, the order in which the arguments to a procedure are evaluated can make a difference to the result. Define a simple procedure f such that evaluating
+
+ ~(+ (f 0) (f 1))~
+
+ will return 0 if the arguments to + are evaluated from left to right but will return 1 if the arguments are evaluated from right to left.
+
+* Solution
+The rules governing this procedure:
+- first call to f returns n
+- second call to f returns 0
+#+BEGIN_SRC scheme :session f :results silent
+  (define first-f '())
+
+  (define (f n)
+    (cond ((null? first-f)
+           (set! first-f n)
+           n)
+          (else 0)))
+#+END_SRC
+
+* Tests
+#+BEGIN_SRC scheme :session f :exports both
+  (f 0)
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+#+BEGIN_SRC scheme :session f :exports both
+  (f 1)
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+#+BEGIN_SRC scheme :session f :exports both
+  (set! first-f '())
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session f :exports both
+  (f 1)
+#+END_SRC
+
+#+RESULTS:
+: 1
+
+#+BEGIN_SRC scheme :session f :exports both
+  (f 0)
+#+END_SRC
+
+#+RESULTS:
+: 0
