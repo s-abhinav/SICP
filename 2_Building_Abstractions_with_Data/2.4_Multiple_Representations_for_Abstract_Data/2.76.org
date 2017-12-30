@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
 #+OPTIONS: toc:2
 #+TOC: headlines 2
->>>>>>> Experiment with org mode.
 * Exercise 2.76
 
 As a large system with generic operations
