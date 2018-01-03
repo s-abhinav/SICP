@@ -1,0 +1,46 @@
+#+TITLE: Exercise 3.10
+In the make-withdraw procedure, the local variable balance is created as a parameter of make-withdraw. We could also create the local state variable explicitly, using let, as follows:
+
+#+BEGIN_SRC scheme :eval no
+(define (make-withdraw initial-amount)
+  (let ((balance initial-amount))
+    (lambda (amount)
+      (if (>= balance amount)
+          (begin (set! balance 
+                       (- balance amount))
+                 balance)
+          "Insufficient funds"))))
+#+END_SRC
+
+Recall from 1.3.2 that let is simply syntactic sugar for a procedure call:
+
+~(let ((⟨var⟩ ⟨exp⟩)) ⟨body⟩)~
+is interpreted as an alternate syntax for
+
+~((lambda (⟨var⟩) ⟨body⟩) ⟨exp⟩)~
+Use the environment model to analyze this alternate version of make-withdraw, drawing figures like the ones above to illustrate the interactions
+
+#+BEGIN_SRC scheme :eval no
+(define W1 (make-withdraw 100))
+(W1 50)
+(define W2 (make-withdraw 100))
+#+END_SRC
+
+Show that the two versions of make-withdraw create objects with the same behavior. How do the environment structures differ for the two versions?
+
+* Solution
+The procedure can be re-written as
+#+BEGIN_SRC scheme :eval no
+  (define (make-withdraw initial-amount)
+    ((lambda (balance)
+       (lambda (amount)
+         (if (>= balance amount)
+             (begin (set! balance 
+                          (- balance amount))
+                    balance)
+             "Insufficient funds"))) initial-amount))
+#+END_SRC
+
+This creates 2 frames for W1, where initial-amount gets bound in E1. The lambda balance part should be considered as a procedure application on initial-amount, similar to section 3.2.2 Applying Simple Procedures. Before W1 is assigned the lambda amount procedure in the global environment, the lambda balance code is evaluated in E2 temporarily to get back lambda amount. The environment part of lambda amount then points to E1, similar to Figure 3.8.
+
+The environment structures differ only during the evaluation of the lambda balance procedure application on initial-amount by temporarily creating a new environment. After this is completed, the state is similar to the first version.
