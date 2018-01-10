@@ -18,6 +18,7 @@ Recall from 1.3.2 that let is simply syntactic sugar for a procedure call:
 is interpreted as an alternate syntax for
 
 ~((lambda (⟨var⟩) ⟨body⟩) ⟨exp⟩)~
+
 Use the environment model to analyze this alternate version of make-withdraw, drawing figures like the ones above to illustrate the interactions
 
 #+BEGIN_SRC scheme :eval no
@@ -41,6 +42,13 @@ The procedure can be re-written as
              "Insufficient funds"))) initial-amount))
 #+END_SRC
 
-This creates 2 frames for W1, where initial-amount gets bound in E1. The lambda balance part should be considered as a procedure application on initial-amount, similar to section 3.2.2 Applying Simple Procedures. Before W1 is assigned the lambda amount procedure in the global environment, the lambda balance code is evaluated in E2 temporarily to get back lambda amount. The environment part of lambda amount then points to E1, similar to Figure 3.8.
+** (define W1 (make-withdraw 100))
+[[./images/3.10/define-W1.svg]]
 
-The environment structures differ only during the evaluation of the lambda balance procedure application on initial-amount by temporarily creating a new environment. After this is completed, the state is similar to the first version.
+** (W1 50)
+[[./images/3.10/W1-50.svg]]
+
+** (define W2 (make-withdraw 100))
+[[./images/3.10/define-W2.svg]]
+
+From the illustrations above, it can be seen that the behavior of the procedures are the same as the first version. However, the environments created during the procedure calls are different. Since the make-withdraw procedure contains the lambda balance procedure which is applied to the initial-amount variable, it creates an environment to hold the value of balance in addition to that of initial-amount.
