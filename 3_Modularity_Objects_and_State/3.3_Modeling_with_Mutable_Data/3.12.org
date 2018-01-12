@@ -1,0 +1,57 @@
+#+Title: Exercise 3.12
+The following procedure for appending lists was introduced in 2.2.1:
+
+#+BEGIN_SRC scheme :eval no
+  (define (append x y)
+    (if (null? x)
+        y
+        (cons (car x) (append (cdr x) y))))
+#+END_SRC
+
+Append forms a new list by successively consing the elements of x onto y. The procedure append! is similar to append, but it is a mutator rather than a constructor. It appends the lists by splicing them together, modifying the final pair of x so that its cdr is now y. (It is an error to call append! with an empty x.)
+
+#+BEGIN_SRC scheme :eval no
+  (define (append! x y)
+    (set-cdr! (last-pair x) y)
+    x)
+#+END_SRC
+
+Here last-pair is a procedure that returns the last pair in its argument:
+
+#+BEGIN_SRC scheme :eval no
+  (define (last-pair x)
+    (if (null? (cdr x))
+        x
+        (last-pair (cdr x))))
+#+END_SRC
+
+Consider the interaction
+#+BEGIN_SRC scheme :eval no
+  (define x (list 'a 'b))
+  (define y (list 'c 'd))
+  (define z (append x y))
+
+  z
+  (a b c d)
+
+  (cdr x)
+  ⟨response⟩
+#+END_SRC
+
+[[./images/3.12/cdr-x.svg]]
+
+#+BEGIN_SRC scheme :eval no
+  (define w (append! x y))
+
+  w
+  (a b c d)
+
+  (cdr x)
+  ⟨response⟩
+#+END_SRC
+
+[[./images/3.12/w-cdr-x.svg]]
+What are the missing ⟨response⟩s? Draw box-and-pointer diagrams to explain your answer.
+
+* Explanation
+The illustrations above explain the structure of x before and after the append! operation. 
