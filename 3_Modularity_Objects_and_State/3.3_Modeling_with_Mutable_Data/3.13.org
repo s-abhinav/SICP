@@ -1,0 +1,20 @@
+#+Title: Exercise 3.13
+Consider the following make-cycle procedure, which uses the last-pair procedure defined in Exercise 3.12:
+
+#+BEGIN_SRC scheme :eval no
+  (define (make-cycle x)
+    (set-cdr! (last-pair x) x)
+    x)
+#+END_SRC
+
+** Draw a box-and-pointer diagram that shows the structure z created by
+
+#+BEGIN_SRC scheme :eval no
+  (define z (make-cycle (list 'a 'b 'c)))
+#+END_SRC
+
+[[./images/3.13/cycles.svg]]
+
+** What happens if we try to compute (last-pair z)?
+From the illustration above, we can see that the make-cycle procedure grabs the last pair in the list x and sets the rest of it to x, which is itself. This effectively builds a cycle or a loop.
+Hence if z points to a loop, invoking last-pair on it will cause the procedure to never return anything but continue in an infinite loop.
