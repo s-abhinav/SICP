@@ -30,22 +30,20 @@ Define an instance of make-accumulator
 
 Add 10
 
-#+BEGIN_SRC scheme :session acc
+#+BEGIN_SRC scheme :session acc :exports both
 (A 10)
 #+END_SRC
 
 #+RESULTS:
-
 : 15
 
 Add 10 again
 
-#+BEGIN_SRC scheme :session acc
+#+BEGIN_SRC scheme :session acc :exports both
 (A 10)
 #+END_SRC
 
 #+RESULTS:
-
 : 25
 
 
