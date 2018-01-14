@@ -1,0 +1,49 @@
+#+Title: Exercise 3.14
+The following procedure is quite useful, although obscure:
+#+BEGIN_SRC scheme :results silent :session mystery
+  (define (mystery x)
+    (define (loop x y)
+      (if (null? x)
+          y
+          (let ((temp (cdr x)))
+            (set-cdr! x y)
+            (loop temp x))))
+    (loop x '()))
+#+END_SRC
+
+Loop uses the “temporary” variable temp to hold the old value of the cdr of x, since the set-cdr! on the next line destroys the cdr. 
+
+** Explain what mystery does in general. 
+Mystery reverses the content of its argument.
+
+** Suppose v is defined by (define v (list 'a 'b 'c 'd)). Draw the box-and-pointer diagram that represents the list to which v is bound. 
+
+#+BEGIN_SRC scheme :results silent :session mystery
+  (define v (list 'a 'b 'c 'd))
+#+END_SRC
+
+[[./images/3.14/list-v.svg]]
+
+** Suppose that we now evaluate (define w (mystery v)). Draw box-and-pointer diagrams that show the structures v and w after evaluating this expression.
+
+#+BEGIN_SRC scheme :results silent :session mystery
+  (define w (mystery v))
+#+END_SRC
+
+[[./images/3.14/list-v-w.svg]]
+
+** What would be printed as the values of v and w?
+#+BEGIN_SRC scheme :session mystery :exports both
+  v
+#+END_SRC
+
+#+RESULTS:
+| a |
+
+#+BEGIN_SRC scheme :session mystery :exports both
+  w
+#+END_SRC
+
+#+RESULTS:
+| d | c | b | a |
+
