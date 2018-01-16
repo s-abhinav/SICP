@@ -1,0 +1,8 @@
+#+Title: Exercise 3.15
+Draw box-and-pointer diagrams to explain the effect of set-to-wow! on the structures z1 and z2 above.
+
+** z1
+[[./images/3.15/z1-wow.svg]]
+
+** z2
+[[./images/3.15/z2-wow.svg]]
