@@ -1,0 +1,83 @@
+#+Title: Exercise 3.16
+Ben Bitdiddle decides to write a procedure to count the number of pairs in any list structure. “It’s easy,” he reasons. “The number of pairs in any structure is the number in the car plus the number in the cdr plus one more to count the current pair.” So Ben writes the following procedure:
+
+#+BEGIN_SRC scheme :session count-pairs :results silent
+  (define (count-pairs x)
+    (if (not (pair? x))
+        0
+        (+ (count-pairs (car x))
+           (count-pairs (cdr x))
+           1)))
+#+END_SRC
+
+Show that this procedure is not correct. In particular, draw box-and-pointer diagrams representing list structures made up of exactly three pairs for which Ben’s procedure would 
+
+** return 3;
+This is straight forward.
+
+[[./images/3.16/3.svg]]
+
+#+BEGIN_SRC scheme :session count-pairs :exports both
+  (define x (list 'a 'b 'c))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 3
+
+** return 4;
+One way to approach this problem is to find out how to add one more iteration to the count. We only have 3 pairs to work with, hence we could wire one of them to another. If we connect the car of a to b, it will add 2 instead of 1 to the count. Let's test it out.
+
+#+BEGIN_SRC scheme :session count-pairs :exports both
+  (set-car! x (cdr x))
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 5
+
+Indeed, it does count to 5.
+
+How about wiring the car of b to that of c?
+
+[[./images/3.16/4.svg]]
+
+First, ~x~ needs to be re-defined, else the previous state will interfere with this one.
+#+BEGIN_SRC scheme :session count-pairs :exports both
+  (define x (list 'a 'b 'c))
+
+  (set-car! (cdr x) (last-pair x))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 4
+
+** return 7;
+For 7, we need to add 3 more to the previous state. Since the cdr of x is now counting 3, we could make the car of x instead count to 4 by pointing it to the cdr of x. Reading this does not help in comprehension. Illustrations would provide a much better understanding. The code does help in validating the count of the structures though.
+
+[[./images/3.16/7.svg]]
+
+#+BEGIN_SRC scheme :session count-pairs :exports both
+  (set-car! x (cdr x))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 7
+
+** never return at all.
+I think this is the easiest among the 4 and 7 count structures. A cycle will cause the procedure to never return at all. The evaluation of this block was obviously disabled since it locks up the REPL as well as forces emacs to crash.
+
+[[./images/3.16/never.svg]]
+
+#+BEGIN_SRC scheme :eval no
+  (set-cdr! (last-pair x) (car x))
+
+  (count-pairs x)
+#+END_SRC
+
+This code block will never return and will continue in an infinite loop since the line (if (not (pair? x)) is never evaluated to true due to the cdr of the last pair pointing to the car of the list.
