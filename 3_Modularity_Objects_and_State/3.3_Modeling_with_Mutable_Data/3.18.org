@@ -1,0 +1,57 @@
+#+Title: Exercise 3.18
+Write a procedure that examines a list and determines whether it contains a cycle, that is, whether a program that tried to find the end of the list by taking successive cdrs would go into an infinite loop. Exercise 3.13 constructed such lists.
+
+* Solution
+We can use solve this problem by using elements from the previous exercise. in? will be helpful here.
+
+To be able to tackle this problem, we need to find a way to compare if the pointer of an element references an already  encountered symbol. If it has been found in the auxiliary data structure, the procedure should return true, otherwise, it should continue parsing the list.
+
+#+BEGIN_SRC scheme :session cycle? :results silent
+  (define (in? list symbol)
+    (cond ((null? list) #f)
+          ((eq? (car list) symbol) #t)
+          (else (in? (cdr list) symbol))))
+#+END_SRC
+
+
+point-of x retrieves the pointer of a pair.
+If the cdr is a pair, get the car value of the pair, otherwise, return the pair.
+#+BEGIN_SRC scheme :session cycle? :results silent
+  (define (pointer-of x)
+    (if (pair? (cdr x))
+        (cadr x))
+    (cdr x))
+#+END_SRC
+
+
+As mentioned above, cycle works by analyzing the pointer of x. If it points to any value in unique-pairs, it is considered a cycle, otherwise, the car of x is added to the auxiliary data structure and is discarded and so that the next value can be analyzed.
+#+BEGIN_SRC scheme :session cycle? :results silent
+  (define (cycle? x)
+    (define (cycle?-helper x unique-pairs)
+      (cond ((null? x) 'false)
+            ((in? unique-pairs (pointer-of x)) 'true)
+            (else (cycle?-helper (cdr x) (cons (car x) unique-pairs)))))
+    (cycle?-helper x '()))
+#+END_SRC
+ 
+* Tests
+
+This is a normal list.
+#+BEGIN_SRC scheme :session cycle? :exports both
+  (define x (list 'a 'b 'c))
+  (cycle? x)
+#+END_SRC
+
+#+RESULTS:
+: false
+
+This list was made into a cycle as seen in exercise 3.16.
+The last pair of x was pointed to the start of the list, making it into a cycle.
+#+BEGIN_SRC scheme :session cycle? :exports both
+  (set-cdr! (last-pair x) (car x))
+
+  (cycle? x)
+#+END_SRC
+
+#+RESULTS:
+: true
