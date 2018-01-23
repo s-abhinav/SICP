@@ -1,0 +1,79 @@
+#+Title: Exercise 3.17
+Devise a correct version of the count-pairs procedure of Exercise 3.16 that returns the number of distinct pairs in any structure. (Hint: Traverse the structure, maintaining an auxiliary data structure that is used to keep track of which pairs have already been counted.)
+
+* Solution
+
+The auxiliary data structure will contain unique symbols. On every iteration, the auxiliary data structure is read to verify if the current pair exists in it or not.
+
+To facilitate the construction of such a procedure, a procedure in? will be created which verifies if a list contains a symbol. 
+
+#+BEGIN_SRC scheme :session correct-count-pairs :results silent
+  (define (in? list symbol)
+    (cond ((null? list) #f)
+          ((eq? (car list) symbol) #t)
+          (else (in? (cdr list) symbol))))
+#+END_SRC
+
+
+The original count-pairs procedure.
+#+BEGIN_SRC scheme :eval no
+  (define (count-pairs x)
+    (if (not (pair? x))
+        0
+        (+ (count-pairs (car x))
+           (count-pairs (cdr x))
+           1)))
+#+END_SRC
+
+The correct version has the auxiliary data structure.
+#+BEGIN_SRC scheme :session correct-count-pairs :results silent
+  (define (count-pairs x)
+    (define (count-pairs-helper x unique-pairs)
+      (cond ((null? x) (length unique-pairs))
+            ((in? unique-pairs (car x))
+             (count-pairs-helper (cdr x) unique-pairs))
+            (else
+             (count-pairs-helper
+              (cdr x) (cons (car x) unique-pairs)))))
+    (count-pairs-helper x '()))
+#+END_SRC
+
+* count-pairs tests
+** return 3;
+#+BEGIN_SRC scheme :session correct-count-pairs :exports both
+  (define x (list 'a 'b 'c))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 3
+
+** return 4;
+#+BEGIN_SRC scheme :session correct-count-pairs :exports both
+  (set-car! (cdr x) (last-pair x))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 3
+
+** return 7;
+#+BEGIN_SRC scheme :session correct-count-pairs :exports both
+  (set-car! x (cdr x))
+
+  (count-pairs x)
+#+END_SRC
+
+#+RESULTS:
+: 3
+
+** never return at all.
+This version still does not solve the cyclic problem.
+#+BEGIN_SRC scheme :eval no
+  (set-cdr! (last-pair x) (car x))
+
+  (count-pairs x)
+#+END_SRC
+
