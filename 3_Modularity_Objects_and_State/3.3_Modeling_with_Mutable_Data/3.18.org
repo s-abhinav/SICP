@@ -46,7 +46,7 @@ This is a normal list.
 : false
 
 This list was made into a cycle as seen in exercise 3.16.
-The last pair of x was pointed to the start of the list, making it into a cycle.
+The last pair of x was pointed to the start of the list, turning it into a cycle.
 #+BEGIN_SRC scheme :session cycle? :exports both
   (set-cdr! (last-pair x) (car x))
 
