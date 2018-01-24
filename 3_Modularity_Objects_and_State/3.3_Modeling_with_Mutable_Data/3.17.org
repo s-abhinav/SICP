@@ -72,7 +72,7 @@ The correct version has the auxiliary data structure.
 ** never return at all.
 This version still does not solve the cyclic problem.
 #+BEGIN_SRC scheme :eval no
-  (set-cdr! (last-pair x) (car x))
+  (set-cdr! (last-pair x) x)
 
   (count-pairs x)
 #+END_SRC

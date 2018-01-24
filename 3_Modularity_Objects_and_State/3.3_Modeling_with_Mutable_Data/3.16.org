@@ -75,7 +75,7 @@ I think this is the easiest among the 4 and 7 count structures. A cycle will cau
 [[./images/3.16/never.svg]]
 
 #+BEGIN_SRC scheme :eval no
-  (set-cdr! (last-pair x) (car x))
+  (set-cdr! (last-pair x) x)
 
   (count-pairs x)
 #+END_SRC
