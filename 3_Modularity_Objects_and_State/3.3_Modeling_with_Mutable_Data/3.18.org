@@ -14,44 +14,44 @@ To be able to tackle this problem, we need to find a way to compare if the point
 #+END_SRC
 
 
-point-of x retrieves the pointer of a pair.
-If the cdr is a pair, get the car value of the pair, otherwise, return the pair.
-#+BEGIN_SRC scheme :session cycle? :results silent
-  (define (pointer-of x)
-    (if (pair? (cdr x))
-        (cadr x))
-    (cdr x))
-#+END_SRC
-
-
-As mentioned above, cycle works by analyzing the pointer of x. If it points to any value in unique-pairs, it is considered a cycle, otherwise, the car of x is added to the auxiliary data structure and is discarded and so that the next value can be analyzed.
 #+BEGIN_SRC scheme :session cycle? :results silent
   (define (cycle? x)
     (define (cycle?-helper x unique-pairs)
       (cond ((null? x) 'false)
-            ((in? unique-pairs (pointer-of x)) 'true)
-            (else (cycle?-helper (cdr x) (cons (car x) unique-pairs)))))
+            ((eq? '() (cdr x)) 'false)
+            ((in? unique-pairs (cadr x)) 'true)
+
+            (else
+             (cycle?-helper
+              (cdr x) (cons (car x) unique-pairs)))))
+
     (cycle?-helper x '()))
 #+END_SRC
+
+
+As mentioned above, cycle works by analyzing the pointer of x. If it points to any value in unique-pairs, it is considered a cycle, otherwise, the car of x is added to the auxiliary data structure and is discarded and so that the next value can be analyzed.
  
 * Tests
 
 This is a normal list.
 #+BEGIN_SRC scheme :session cycle? :exports both
   (define x (list 'a 'b 'c))
+
   (cycle? x)
 #+END_SRC
 
 #+RESULTS:
 : false
 
+
 This list was made into a cycle as seen in exercise 3.16.
 The last pair of x was pointed to the start of the list, turning it into a cycle.
 #+BEGIN_SRC scheme :session cycle? :exports both
-  (set-cdr! (last-pair x) (car x))
+  (set-cdr! (last-pair x) x)
 
   (cycle? x)
 #+END_SRC
 
 #+RESULTS:
 : true
+
