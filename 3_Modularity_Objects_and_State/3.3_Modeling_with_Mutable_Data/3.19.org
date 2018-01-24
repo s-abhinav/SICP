@@ -1,0 +1,40 @@
+#+Title: Exercise 3.19
+Redo Exercise 3.18 using an algorithm that takes only a constant amount of space. (This requires a very clever idea.)
+
+* Solution
+There is a well known technique for solving this particular problem and it's the two pointer approach.
+
+#+BEGIN_SRC scheme :session cycle-O-1 :results silent
+  (define (cycle? x)
+    (define (cycle?-helper x 2-inc)
+      (cond ((null? (cdr x)) 'false)
+            ((null? (cddr x)) 'false)
+            ((eq? (car x) (car 2-inc)) 'true)
+            (else (cycle?-helper (cdr x) (cddr 2-inc)))))
+    (if (not (null? (cdr x)))
+        (cycle?-helper x (cdr x))
+        'true))
+
+#+END_SRC
+
+* Tests
+
+** No cycle test
+#+BEGIN_SRC scheme :session cycle-O-1 :exports both
+  (define x (list 'a 'b 'c))
+
+  (cycle? x)
+#+END_SRC
+
+#+RESULTS:
+: false
+
+** Cycle test
+#+BEGIN_SRC scheme :session cycle-O-1 :exports both
+  (set-cdr! (last-pair x) x)
+
+  (cycle? x)
+#+END_SRC
+
+#+RESULTS:
+: true
