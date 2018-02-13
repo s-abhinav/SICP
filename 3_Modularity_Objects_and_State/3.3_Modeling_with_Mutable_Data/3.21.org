@@ -1,0 +1,27 @@
+#+Title: Exercise 3.21
+
+1. Eva Lu means that the Lisp interpreter is printing the data structure used to represent the queue, which is not necessarily human readable. 
+
+2. Since the queue data structure is a pair where its car points to the start of the elements of the queue and its cdr points to the end of the elements in the queue, we see the end element of the queue in the return values. For instance:
+   (insert-queue! q1 'a) => ((a) a)
+   (insert-queue! q1 'b) => ((a b) b)
+   
+   This might not be obvious at first but it still makes sense. Since the front-pointer of the queue is now pointing to the cdr of the last element, which is (), it shows up as () in (() b). The rear pointer remains unchanged, by pointing to the last element in the list, which is still b.
+   (delete-queue! q1) => (() b) 
+
+3. 
+
+#+BEGIN_SRC scheme :session queue-print :results silent
+  (define (print-queue queue)
+    (car queue))
+#+END_SRC
+
+* Tests
+
+#+BEGIN_SRC scheme :session queue-print :exports both
+  (print-queue (cons '(a b c) '(c)))
+#+END_SRC
+
+#+RESULTS:
+| a | b | c |
+
