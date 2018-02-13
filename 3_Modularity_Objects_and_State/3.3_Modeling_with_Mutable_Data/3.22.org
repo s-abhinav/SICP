@@ -1,0 +1,134 @@
+#+Title: Exercise 3.22
+
+Instead of representing a queue as a pair of pointers, we can build a queue as a procedure with local state. The local state will consist of pointers to the beginning and the end of an ordinary list. Thus, the make-queue procedure will have the form
+
+#+BEGIN_SRC scheme :eval no
+(define (make-queue)
+  (let ((front-ptr … )
+        (rear-ptr … ))
+    ⟨definitions of internal procedures ⟩
+    (define (dispatch m) …)
+    dispatch))
+#+END_SRC
+
+Complete the definition of make-queue and provide implementations of the queue operations using this representation.
+
+* Solution
+
+#+BEGIN_SRC scheme :session queue :results silent
+  (define (make-queue)
+    (let ((front-ptr '())
+          (rear-ptr '()))
+
+      (define (empty-queue?)
+        (null? front-ptr))
+
+      (define (get-queue)
+        front-ptr)
+
+      (define (front-queue)
+        (if (empty-queue?)
+            (error "Front called with an empty queue")
+            (car front-ptr)))
+
+      (define (set-front-ptr! item) 
+        (set! front-ptr item))
+
+      (define (set-rear-ptr! item) 
+        (set! rear-ptr item))
+
+      (define (insert-queue! item)
+        (let ((new-pair (cons item '())))
+          (cond ((empty-queue?)
+                 (set-front-ptr! new-pair)
+                 (set-rear-ptr! new-pair)
+                 (get-queue))
+                (else (set-cdr! rear-ptr new-pair)
+                      (set-rear-ptr! new-pair)
+                      (get-queue)))))
+
+      (define (delete-queue!)
+        (cond ((empty-queue?)
+               (error "DELETE! called with 
+                   an empty queue" queue))
+              (else (set-front-ptr! 
+                     (cdr front-ptr))
+                    (get-queue))))
+      
+      (define (dispatch m)
+        (cond ((eq? 'empty-queue? m) (empty-queue?))
+              ((eq? 'get-queue m) (get-queue))
+              ((eq? 'insert-queue! m) (lambda (x) (insert-queue! x)))
+              ((eq? 'delete-queue! m) (delete-queue!))
+              (else (error "Unknown method " m))))
+
+      dispatch))
+#+END_SRC
+
+* Tests
+** x
+*** Insert
+#+BEGIN_SRC scheme :session queue :exports both
+
+  (define x (make-queue))
+
+  ((x 'insert-queue!) 'a)
+  ((x 'insert-queue!) 'b)
+  ((x 'insert-queue!) 'c)
+#+END_SRC
+
+#+RESULTS:
+| a | b | c |
+
+*** Delete first
+#+BEGIN_SRC scheme :session queue :exports both
+  (x 'delete-queue!)
+#+END_SRC
+
+#+RESULTS:
+| b | c |
+
+*** Delete second
+#+BEGIN_SRC scheme :session queue :exports both
+  (x 'delete-queue!)
+#+END_SRC
+
+#+RESULTS:
+| c |
+
+*** Insert another
+#+BEGIN_SRC scheme :session queue :exports both
+  ((x 'insert-queue!) 'e)
+#+END_SRC
+
+#+RESULTS:
+| c | e |
+
+** Test closure
+*** Insert
+#+BEGIN_SRC scheme :session queue :exports both
+  (define y (make-queue))
+
+  ((y 'insert-queue!) 'i)
+  ((y 'insert-queue!) 'j)
+  ((y 'insert-queue!) 'k)
+#+END_SRC
+
+#+RESULTS:
+| i | j | k |
+
+*** Delete
+#+BEGIN_SRC scheme :session queue :exports both
+  (y 'delete-queue!)
+#+END_SRC
+
+#+RESULTS:
+| j | k |
+
+*** Test x is unchanged
+#+BEGIN_SRC scheme :session queue :exports both
+  (x 'get-queue)
+#+END_SRC
+
+#+RESULTS:
+| c | e |
