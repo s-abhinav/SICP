@@ -1,0 +1,160 @@
+#+Title: Exercise 3.23
+A deque (“double-ended queue”) is a sequence in which items can be inserted and deleted at either the front or the rear. Operations on deques are the constructor make-deque, the predicate empty-deque?, selectors front-deque and rear-deque, and mutators front-insert-deque!, rear-insert-deque!, front-delete-deque!, rear-delete-deque!. Show how to represent deques using pairs, and give implementations of the operations. All operations should be accomplished in Θ(1) steps.
+
+
+* Solution
+#+BEGIN_SRC scheme :session deque-local-state :results silent
+  (define (make-deque)
+    (let ((front-deque (cons (cons '() '()) '()))
+          (rear-deque (cons '() '())))
+
+      (define (print-deque)
+        (define (construct-deque queue)
+          (cond
+           ((null? queue) '())
+           ((null? (car queue)) '())
+           ((eq? (car queue) (get-rear-deque)) (caar queue))
+           (else
+            (cons
+             (caar queue)
+             (construct-deque (cdr queue))))))
+        (construct-deque front-deque))
+      
+      (define (empty? queue)
+        (null? (caar queue)))
+
+      (define (get-front-deque)
+        front-deque)
+
+      (define (get-rear-deque)
+        rear-deque)
+
+      (define (rear-insert-deque! pair)
+        (let ((data-previous (cons pair rear-deque)))
+          (cond ((empty? front-deque)
+                 (set-car! front-deque data-previous)
+                 (set! rear-deque front-deque)
+                 (print-deque))
+                (else
+                 (let ((next (cons data-previous '())))
+                   (set-cdr! rear-deque next)
+                   (set! rear-deque next)
+                   (print-deque))))))
+      
+      (define (front-insert-deque! pair)
+        (let ((data-previous (cons pair '())))
+          (let ((temp-front (cons '() '())))
+            (set-car! temp-front data-previous)
+            (set-cdr! (car front-deque) temp-front)
+            (set-cdr! temp-front front-deque)
+            (set! front-deque temp-front)
+            (print-deque))))
+      
+      (define (front-delete-deque!)
+        (cond ((or (null? front-deque) (not (empty? front-deque)))
+               (set! front-deque (cdr front-deque))
+               (set-cdr! (car front-deque) '())
+               (print-deque))
+              (else (error "Deque is empty"))))
+
+      (define (rear-delete-deque!)
+        (cond ((or (null? front-deque) (not (empty? front-deque)))
+               (set! rear-deque (cdar rear-deque))
+               (set-cdr! rear-deque '())
+               (print-deque))
+              (else (error "Deque is empty"))))
+
+      (define (dispatch m)
+        (cond ((eq? m 'rear-insert-deque!) (lambda (x) (rear-insert-deque! x)))
+              ((eq? m 'front-insert-deque!) (lambda (x) (front-insert-deque! x)))
+              ((eq? m 'front-delete-deque!) (front-delete-deque!))
+              ((eq? m 'rear-delete-deque!) (rear-delete-deque!))
+              ((eq? m 'front-deque) (get-front-deque))
+              ((eq? m 'rear-deque) (get-rear-deque))
+              ((eq? m 'print-deque) (print-deque))
+              (else (error "Unknown method " m))))
+      dispatch))
+
+#+END_SRC
+
+* Tests
+
+** x
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (define x (make-deque))
+
+  ((x 'rear-insert-deque!) 'a)
+  ((x 'rear-insert-deque!) 'b)
+  ((x 'rear-insert-deque!) 'c)
+#+END_SRC
+
+#+RESULTS:
+| a | b | c |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  ((x 'front-insert-deque!) 'z)
+  ((x 'front-insert-deque!) 'y)
+  ((x 'front-insert-deque!) 'x)
+#+END_SRC
+
+#+RESULTS:
+| x | y | z | a | b | c |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (x 'front-delete-deque!)
+#+END_SRC
+
+#+RESULTS:
+| y | z | a | b | c |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (x 'rear-delete-deque!)
+#+END_SRC
+
+#+RESULTS:
+| y | z | a | b |
+
+** y - closure tests
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (define y (make-deque))
+
+  ((y 'rear-insert-deque!) 'i)
+  ((y 'rear-insert-deque!) 'j)
+  ((y 'rear-insert-deque!) 'k)
+#+END_SRC
+
+#+RESULTS:
+| i | j | k |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  ((y 'front-insert-deque!) 'p)
+  ((y 'front-insert-deque!) 'q)
+  ((y 'front-insert-deque!) 'r)
+#+END_SRC
+
+#+RESULTS:
+| r | q | p | i | j | k |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (y 'front-delete-deque!)
+#+END_SRC
+
+#+RESULTS:
+| q | p | i | j | k |
+
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (y 'rear-delete-deque!)
+#+END_SRC
+
+#+RESULTS:
+| q | p | i | j |
+
+*** Test state of x
+#+BEGIN_SRC scheme :session deque-local-state :exports both
+  (x 'print-deque)
+#+END_SRC
+
+#+RESULTS:
+| y | z | a | b |
+
