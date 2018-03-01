@@ -1,0 +1,88 @@
+#+Title: Exercise 3.25
+ Generalizing one- and two-dimensional tables, show how to implement a table in which values are stored under an arbitrary number of keys and different values may be stored under different numbers of keys.  The `lookup' and `insert!' procedures should take as input a list of keys used to access the table.
+
+* Solution
+
+The key here is to modify the assoc predicate? procedure so that it can verify a list. The procedure signature remains the same, hence there is no need to modify other procedures. Even the lookup procedure continues to work without any changes. 
+
+#+BEGIN_SRC scheme :session table :results output silent
+  (define true #t)
+  (define false #f)
+
+  (define (make-table predicate?)
+    (let ((local-table (list '*table*)))
+
+      (define (assoc key records)
+        (cond ((null? records) false)
+              ((predicate? key (caar records)) 
+               (car records))
+              (else (assoc key (cdr records)))))
+
+      (define (lookup key-1 key-2)
+        (let ((subtable 
+               (assoc key-1 (cdr local-table))))
+          (if subtable
+              (let ((record 
+                     (assoc key-2 
+                            (cdr subtable))))
+                (if record (cdr record) false))
+              false)))
+
+      (define (insert! key-1 key-2 value)
+        (let ((subtable 
+               (assoc key-1 (cdr local-table))))
+          (if subtable
+              (let ((record 
+                     (assoc key-2 
+                            (cdr subtable))))
+                (if record
+                    (set-cdr! record value)
+                    (set-cdr! 
+                     subtable
+                     (cons (cons key-2 value)
+                           (cdr subtable)))))
+              (set-cdr! 
+               local-table
+               (cons (list key-1
+                           (cons key-2 value))
+                     (cdr local-table)))))
+        'ok)
+
+      (define (dispatch m)
+        (cond ((eq? m 'lookup-proc) lookup)
+              ((eq? m 'insert-proc!) insert!)
+              (else (error "Unknown operation: 
+                              TABLE" m))))
+      dispatch))
+
+  (define (same-key-list? x y)
+    (cond
+     ((and (not (pair? x)) (pair? y)) #f)
+     ((and (pair? x) (not (pair? y))) #f)
+     ((and (not (pair? x)) (not (pair? y))) (equal? x y))
+     ((and (pair? x) (pair? y) (not (equal? (length x) (length y)))) #f)
+     ((and (null? x) (null? y)) #t)
+     ((and (equal? (car x) (car y))) (same-key-list? (cdr x) (cdr y)))
+     (else #f)))
+
+  (define operation-table (make-table same-key-list?))
+  (define get (operation-table 'lookup-proc))
+  (define put (operation-table 'insert-proc!))
+#+END_SRC
+
+* Tests
+#+BEGIN_SRC scheme :session table :exports both
+  (put '(solar system) '1 'Sun)
+  (put '(solar system planets) '3 'Earth)
+  (put '(solar system planets) '(3 1) 'Moon)
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+#+BEGIN_SRC scheme :session table :exports both
+  (get '(solar system planets) '(3 1))
+#+END_SRC
+
+#+RESULTS:
+: Moon
