@@ -1,0 +1,23 @@
+#+Title: Exercise 3.29
+ Another way to construct an or-gate is as a compound digital logic device, built from and-gates and inverters. Define a procedure or-gate that accomplishes this. What is the delay time of the or-gate in terms of and-gate-delay and inverter-delay?
+
+* Solution
+De Morgan's Law can be used to transform the Boolean algebra. The substitution form (or P Q) is equivalent to (not (and (not P) (not Q))) where P and Q are input lines.
+
+[[./images/3.29/or-gate.svg]]
+
+#+BEGIN_SRC scheme
+  (define (or-gate P Q O)
+    (let ((R (make-wire))
+          (S (make-wire))
+          (T (make-wire)))
+      (inverter P R)
+      (inverter Q S)
+      (and-gate R S T)
+      (inverter T O)))
+#+END_SRC
+
+The delay time will be:
+1 inverter delay time + 1 and-gate delay time + 1 inverter delay time.
+
+Note that 3 inverter delay time was not counted since the first 2 have their signals changed at the same time.
