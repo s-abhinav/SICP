@@ -1,0 +1,38 @@
+#+Title: Exercise 3.30
+
+#+BEGIN_SRC scheme :eval no
+  (define (ripple-carry-adder a-l b-l s-l C)
+    (let ((c-in-l
+           (map (lambda (x)
+                  ((make-wire)))
+                s-l)))
+      (let ((c-out-l (append (cdr c-in-l) (list C))))
+        (define (ripple-carry-adder-helper a-l b-l c-in-l c-out-l)
+          (cond ((null? a-l) '())
+                (else
+                 (full-adder (car a-l) (car b-l) (car c-in-l) (car c-out-l))
+                 (ripple-carry-adder-helper (cdr a-l) (cdr b-l) (cdr c-in-l) (cdr c-out-l)))))
+        (ripple-carry-adder-helper a-l b-l c-in-l s-l c-out-l))))
+#+END_SRC
+
+** Delay calculation
+*** One Half Adder
+**** A half adder contains from left to right, 
+- 1 And gate, a
+- 1 Or gate, b
+- 1 Inverter, c
+- 1 And gate, d
+**** Since the right most And gate depends on the Or gate and the Inverter where the Inverter also depends on the output of the left most And gate, they should be counted as groups. a and c will be grouped together to be ac. If ac takes longer than b, then ac should be counted, otherwise it's b plus d.
+#+BEGIN_SRC scheme
+  (define half-adder-delay (+ (max (+ a c) b) d))
+#+END_SRC
+
+*** One Full Adder
+#+BEGIN_SRC scheme
+  (define full-adder-delay (+ (* 2 half-adder-delay) Inverter))
+#+END_SRC
+ 
+*** Ripple carry adder delay
+#+BEGIN_SRC scheme
+  (* n full-adder-delay)
+#+END_SRC
