@@ -1,0 +1,13 @@
+#+Title: Exercise 3.31
+
+The internal procedure accept-action-procedure! defined in make-wire specifies that when a new action procedure is added to a wire, the procedure is immediately run. Explain why this initialization is necessary. In particular, trace through the half-adder example in the paragraphs above and say how the system’s response would differ if we had defined accept-action-procedure! as
+
+#+BEGIN_SRC scheme :eval no
+  (define (accept-action-procedure! proc)
+    (set! action-procedures
+          (cons proc action-procedures)))
+#+END_SRC
+
+* Solution
+Calling the procedure immediately sets the value of the components right away, meaning that the complete state of the system at t=0 is correct. If this is not done, then it would depend on the invocation of the propagate procedure to complete so that the system has a valid state.
+
