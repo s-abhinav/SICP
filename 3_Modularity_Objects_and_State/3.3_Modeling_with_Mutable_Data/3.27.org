@@ -45,7 +45,7 @@ The call to (memo-fib (- n 1)) would have stored all the computed values of 0 to
 
  
 * Tests
-#+BEGIN_SRC scheme :results output silent
+#+BEGIN_SRC scheme :session memoization :results output silent
   (define true #t)
   (define false #f)
 
@@ -125,10 +125,9 @@ The call to (memo-fib (- n 1)) would have stored all the computed values of 0 to
 
 
 * Tests
-#+BEGIN_SRC scheme :exports both
+#+BEGIN_SRC scheme :session memoization :exports both
 (memo-fib 50)
 #+END_SRC
 
 #+RESULTS:
-: An error occurred.
-
+: 12586269025
