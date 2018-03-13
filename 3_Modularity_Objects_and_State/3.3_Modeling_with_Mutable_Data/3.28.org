@@ -3,7 +3,7 @@
 
 * Solution
 
-#+BEGIN_SRC scheme :eval no :exports src
+#+BEGIN_SRC scheme :eval no
   (define (boolean->digital v)
     (cond ((eq? v #f) 0)
           ((eq? v #t) 1)
