@@ -1,0 +1,122 @@
+#+Title: Exercise 3.51
+In order to take a closer look at delayed evaluation, we will use the following procedure, which simply returns its argument after printing it:
+
+#+BEGIN_SRC scheme :eval no
+(define (show x)
+  (display-line x)
+  x)
+#+END_SRC
+
+What does the interpreter print in response to evaluating each expression in the following sequence?
+
+#+BEGIN_SRC scheme :eval no
+  (define x 
+    (stream-map 
+     show 
+     (stream-enumerate-interval 0 10)))
+#+END_SRC
+This will only execute show for the first element and delaying the rest, hence displaying only 0.
+
+* Solution
+#+BEGIN_SRC scheme :eval no
+  (stream-ref x 5)
+#+END_SRC
+
+
+It will print
+1
+2
+3
+4
+5
+
+not printing 0 since it was computed already, then followed by 5.
+
+#+BEGIN_SRC scheme :eval no
+  (stream-ref x 7)
+#+END_SRC
+
+6
+7
+
+7
+
+
+* Code
+The ~cons-stream~ procedure was not built as described in the book. Since Scheme is an applicative-order language, it would evaluate the argument b to cons-stream, defeating its purpose. Instead, when calling cons-stream, the argument b is wrapped in the delay procedure as has been done in stream-map and stream-enumerate-interval. This is definitely not the ideal way of doing it and will be covered in section 4.2 of the book.
+
+#+BEGIN_SRC scheme :session stream :results output silent
+  (define the-empty-stream '())
+  (define stream-null? null?)
+
+  (define (cons-stream a b)
+    (cons a b))
+
+  (define (stream-car stream) 
+    (car stream))
+
+  (define (stream-cdr stream) 
+    (force (cdr stream)))
+
+  (define false #f)
+  (define true #t)
+
+  (define (stream-ref s n)
+    (if (= n 0)
+        (stream-car s)
+        (stream-ref (stream-cdr s) (- n 1))))
+
+  (define (stream-map proc s)
+    (if (stream-null? s)
+        the-empty-stream
+        (cons-stream 
+         (proc (stream-car s))
+         (delay (stream-map proc (stream-cdr s))))))
+
+  (define (stream-enumerate-interval low high)
+    (if (> low high)
+        the-empty-stream
+        (cons-stream
+         low
+         (delay (stream-enumerate-interval (+ low 1)
+                                     high)))))
+
+  (define (show x)
+    (display x)
+    x) 
+#+END_SRC
+
+* Tests
+#+BEGIN_SRC scheme :session stream :exports both
+  (define x 
+    (stream-map 
+     show 
+     (stream-enumerate-interval 0 1000)))
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+#+BEGIN_SRC scheme :session stream :exports both
+  (stream-ref x 5)
+#+END_SRC
+
+#+RESULTS:
+: 1
+: 2
+: 3
+: 4
+: 5
+: 
+: 5
+
+#+BEGIN_SRC scheme :session stream :exports both
+  (stream-ref x 7)
+#+END_SRC
+
+#+RESULTS:
+: 6
+: 7
+: 
+: 7
+
