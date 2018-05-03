@@ -178,7 +178,7 @@ Using primitive multiplier, adder, and constant constraints, define a procedure 
 #+END_SRC
 
 * Celsius to Fahrenheit
-#+BEGIN_SRC scheme :session constraint-propagation
+#+BEGIN_SRC scheme :session constraint-propagation :exports both
   (define C (make-connector))
   (define F (make-connector))
 
@@ -209,9 +209,8 @@ Using primitive multiplier, adder, and constant constraints, define a procedure 
 : Probe: Fahrenheit temp = 394/5
 : $3 = done
 
-
 * Averager
-#+BEGIN_SRC scheme :session constraint-propagation
+#+BEGIN_SRC scheme :session constraint-propagation :exports both
   (define A (make-connector))
   (define B (make-connector))
   (define C (make-connector))
