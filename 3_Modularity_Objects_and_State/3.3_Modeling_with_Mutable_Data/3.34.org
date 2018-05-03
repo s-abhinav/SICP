@@ -1,0 +1,13 @@
+#+Title: Exercise 3.34
+Louis Reasoner wants to build a squarer, a constraint device with two terminals such that the value of connector b on the second terminal will always be the square of the value a on the first terminal. He proposes the following simple device made from a multiplier:
+
+~(define (squarer a b) (multiplier a a b))~
+
+There is a serious flaw in this idea. Explain.
+
+* Solution
+When the multiplier procedure is fed with the same connector for the multiplier (a) and the multiplicand (a), it will automatically calculate the value of the product (b).
+
+If b is first set a value, the multiplier procedure won't do anything until one of its multiplier or multiplicand is set a value. This is where the flaw lies. 
+
+If any one of the as is set, the procedure will complain that there is a contradiction.
