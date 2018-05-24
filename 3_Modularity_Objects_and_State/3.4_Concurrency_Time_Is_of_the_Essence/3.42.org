@@ -1,0 +1,39 @@
+#+Title: Exercise 3.42
+Ben Bitdiddle suggests that it’s a waste of time to create a new serialized procedure in response to every withdraw and deposit message. He says that make-account could be changed so that the calls to protected are done outside the dispatch procedure. That is, an account would return the same serialized procedure (which was created at the same time as the account) each time it is asked for a withdrawal procedure.
+
+#+BEGIN_SRC scheme :eval no
+(define (make-account balance)
+  (define (withdraw amount)
+    (if (>= balance amount)
+        (begin (set! balance 
+                     (- balance amount))
+               balance)
+        "Insufficient funds"))
+  (define (deposit amount)
+    (set! balance (+ balance amount))
+    balance)
+  (let ((protected (make-serializer)))
+    (let ((protected-withdraw 
+           (protected withdraw))
+          (protected-deposit 
+           (protected deposit)))
+      (define (dispatch m)
+        (cond ((eq? m 'withdraw) 
+               protected-withdraw)
+              ((eq? m 'deposit) 
+               protected-deposit)
+              ((eq? m 'balance) 
+               balance)
+              (else 
+               (error "Unknown request: 
+                       MAKE-ACCOUNT"
+                      m))))
+      dispatch)))
+#+END_SRC
+
+**** Is this a safe change to make? 
+No.
+**** In particular, is there any difference in what concurrency is allowed by these two versions of make-account?
+If there are two instances of make-account executing the withdraw or deposit procedure, then they will not be protected, since all instances of the protected procedures in dispatch are effectively the same.
+
+In other words, these two protected procedures are globally guaranteed to not execute at the same time, but since no new protected procedures are created for every instance of make account, two instances can effectively execute the withdraw procedure at the same time, hence invalidating the correctness of balance.
