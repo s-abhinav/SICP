@@ -1,0 +1,13 @@
+#+Title: Exercise 3.39
+Which of the five possibilities in the parallel execution shown above remain if we instead serialize execution as follows:
+
+#+BEGIN_SRC scheme :eval no
+(define x 10)
+(define s (make-serializer))
+(parallel-execute 
+  (lambda () 
+    (set! x ((s (lambda () (* x x))))))
+  (s (lambda () (set! x (+ x 1)))))
+#+END_SRC
+
+Of all the possibilities, only the 110 value will not be possible. While P1 reads, P2 cannot update the value of x, but P1 can update the value of x whenever the value of (* x x) is ready. 
