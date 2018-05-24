@@ -1,0 +1,33 @@
+#+Title: Exercise 3.40
+**** Give all possible values of x that can result from executing
+#+BEGIN_SRC scheme :eval no
+(define x 10)
+(parallel-execute 
+ (lambda () (set! x (* x x)))
+ (lambda () (set! x (* x x x))))
+#+END_SRC
+
+|------+--------------------------------------------------------+------------------|
+| Case | Description                                            | Value            |
+|------+--------------------------------------------------------+------------------|
+|    1 | P1 then P2                                             | 100^3            |
+|------+--------------------------------------------------------+------------------|
+|    2 | P2 then P1                                             | 1000^2           |
+|------+--------------------------------------------------------+------------------|
+|    3 | P1 reads 1st x, P2 updates, P1 reads 2nd x and updates | 10 * 10^3        |
+|------+--------------------------------------------------------+------------------|
+|    4 | P2 reads 1st x, P1 updates x to 100, P2 reads 2nd x,   |                  |
+|      | P1 updates x to 100^2 then P3 updates x                | 10 * 100 * 100^2 |
+|------+--------------------------------------------------------+------------------|
+
+**** Which of these possibilities remain if we instead use serialized procedures:
+
+#+BEGIN_SRC scheme :eval no
+(define x 10)
+(define s (make-serializer))
+(parallel-execute 
+ (s (lambda () (set! x (* x x))))
+ (s (lambda () (set! x (* x x x)))))
+#+END_SRC
+
+1 and 2
