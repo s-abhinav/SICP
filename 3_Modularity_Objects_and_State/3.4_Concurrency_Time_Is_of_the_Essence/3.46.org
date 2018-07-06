@@ -1,0 +1,6 @@
+#+Title: Exercise 3.46
+**** Suppose that we implement test-and-set! using an ordinary procedure as shown in the text, without attempting to make the operation atomic. Draw a timing diagram like the one in Figure 3.29 to demonstrate how the mutex implementation can fail by allowing two processes to acquire the mutex at the same time.
+
+Let's say we have procedures A and B.
+
+When A runs, it is computing (if (car cell) and sees that it’s false and proceeds to acquire the mutex by setting the cell to true. Before this operation completes, B completes the evaluation of test-and-set!. At this point, A and B have both acquired the mutex and violated the serialization rule. 
