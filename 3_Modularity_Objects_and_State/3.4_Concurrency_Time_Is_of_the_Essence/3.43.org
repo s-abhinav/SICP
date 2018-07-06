@@ -1,0 +1,31 @@
+#+Title: Exercise 3.43
+Suppose that the balances in three accounts start out as $10, $20, and $30, and that multiple processes run, exchanging the balances in the accounts. Argue that if the processes are run sequentially, after any number of concurrent exchanges, the account balances should be $10, $20, and $30 in some order. 
+
+**** Draw a timing diagram like the one in Figure 3.29 to show how this condition can be violated if the exchanges are implemented using the first version of the account-exchange program in this section.  
+
+Even though the withdraw and deposit procedure of each account is protected, the exchanges between accounts themselves are not. When there is a swapping in progress in between account A and account B before the ((account1 ‘withdraw) difference) ((account2 ‘deposit) difference) is evaluated, another transaction between A and C can complete during this time.
+
+
+**** On the other hand, argue that even with this exchange program, the sum of the balances in the accounts will be preserved.
+
+Let’s say A has $8, B $9 and C $11
+
+While A and B are exchanging, the difference is $1. 
+Before the first transaction completes, A and C computed that the difference is $3 and that A has to add up to $3 which is $11 and C should be $8.
+
+When A and B completes, A has $11 + 1 -> $12 and B has $8. At this time, C has $8. The total is still $28
+
+
+**** Draw a timing diagram to show how even this condition would be violated if we did not serialize the transactions on individual accounts.
+
+Let’s say that account A has $1 and account B has $2.
+
+There are two instances wanting to do the same exchange at once.
+
+Transaction 1 after the line ((account1 ‘withdraw) difference)
+While transaction 2 has completed doing the exchange at this time.
+
+At this point, transaction 1 has added $1 to A, which is $2
+Transaction two completes before 1 has finished the last line. -> A has $2, B has $1.
+
+Transaction one completes by subtracting the $1 from B effectively ending the total amount from the two accounts with $2 instead of $1.
