@@ -1,0 +1,167 @@
+#+Title: Exercise 3.52
+
+Consider the sequence of expressions
+
+#+BEGIN_SRC scheme
+  (define sum 0)
+
+  (define (accum x)
+    (set! sum (+ x sum))
+    sum)
+
+  (define seq 
+    (stream-map 
+     accum 
+     (stream-enumerate-interval 1 20)))
+
+  (define y (stream-filter even? seq))
+
+  (define z 
+    (stream-filter 
+     (lambda (x) 
+       (= (remainder x 5) 0)) seq))
+
+  (stream-ref y 7)
+  (display-stream z)
+#+END_SRC
+
+* Code
+#+BEGIN_SRC scheme :session stream :results output silent
+  (define the-empty-stream '())
+  (define stream-null? null?)
+
+  (define (cons-stream a b)
+    (cons a b))
+
+  (define (stream-car stream) 
+    (car stream))
+
+  (define (stream-cdr stream) 
+    (force (cdr stream)))
+
+  (define false #f)
+  (define true #t)
+
+  (define (stream-ref s n)
+    (if (= n 0)
+        (stream-car s)
+        (stream-ref (stream-cdr s) (- n 1))))
+
+  (define (stream-map proc s)
+    (if (stream-null? s)
+        the-empty-stream
+        (cons-stream 
+         (proc (stream-car s))
+         (delay (stream-map proc (stream-cdr s))))))
+
+  (define (stream-enumerate-interval low high)
+    (if (> low high)
+        the-empty-stream
+        (cons-stream
+         low
+         (delay (stream-enumerate-interval (+ low 1)
+                                           high)))))
+
+  (define (stream-filter pred stream)
+    (cond ((stream-null? stream) 
+           the-empty-stream)
+          ((pred (stream-car stream))
+           (cons-stream 
+            (stream-car stream)
+            (delay (stream-filter 
+                    pred
+                    (stream-cdr stream)))))
+          (else (stream-filter 
+                 pred 
+                 (stream-cdr stream)))))
+
+  (define (show x)
+    (display x)
+    x)
+
+  (define sum 0)
+
+  (define (accum x)
+    (set! sum (+ x sum))
+    sum)
+
+  (define seq 
+    (stream-map 
+     accum 
+     (stream-enumerate-interval 1 20)))
+
+  (define y (stream-filter even? seq))
+
+  (define z 
+    (stream-filter 
+     (lambda (x) 
+       (= (remainder x 5) 0)) seq))
+
+  (define (display-stream stream)
+    (cond ((stream-null? stream) '())
+          (else (display (stream-car stream))
+                (newline)
+                (display-stream (stream-cdr stream)))))
+
+(define (delay exp) (lambda () exp))
+#+END_SRC
+
+
+*  
+**** What is the value of sum after each of the above expressions is evaluated?
+#+BEGIN_SRC scheme :eval no
+  (define sum 0)
+#+END_SRC
+0
+
+#+BEGIN_SRC scheme :eval no
+  (define seq
+    (stream-map
+     accum
+     (stream-enumerate-interval 1 20)))
+#+END_SRC
+1
+
+#+BEGIN_SRC scheme :eval no
+  (define y (stream-filter even? seq))
+#+END_SRC
+6
+
+#+BEGIN_SRC scheme :eval no
+  (define z
+    (stream-filter
+     (lambda (x)
+       (= (remainder x 5) 0)) seq))
+#+END_SRC
+10
+
+**** What is the printed response to evaluating the stream-ref and display-stream expressions? 
+
+#+BEGIN_SRC scheme :session stream :exports both
+  (stream-ref y 7)
+#+END_SRC
+
+#+RESULTS:
+: 136
+
+#+BEGIN_SRC scheme :session stream :exports both
+  (display-stream z)
+#+END_SRC
+
+ #+RESULTS:
+ : 10
+ : 15
+ : 45
+ : 55
+ : 105
+ : 120
+ : 190
+ : 210
+
+**** Would these responses differ if we had implemented (delay ⟨exp⟩) simply as (lambda () ⟨exp⟩) without using the optimization provided by memo-proc? Explain.
+
+The responses to stream-ref and display-stream would not have differed. 
+
+stream-ref will always return the same value regardless of the implementation of delay since both the memoized and non memoized procedures would have returned the value. For the memoized version, the value would not have been calculated again. 
+
+display-stream would behave the same as stream-ref. With the memoized procedure, the already calculated value would be returned and displayed which would make both results the same.   
