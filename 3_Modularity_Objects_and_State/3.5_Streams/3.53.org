@@ -1,0 +1,14 @@
+#+Title: Exercise 3.53
+
+Without running the program, describe the elements of the stream defined by
+
+#+BEGIN_SRC scheme :eval no
+  (define s (cons-stream 1 (add-streams s s)))
+#+END_SRC
+
+| 2 | 4 | 8 | ... 2^n   |
+
+Since the value returned by the car-stream initially is 1, this is doubled which would be 2.
+Then stream-map will get the second value in the list, which is 2, to be used to generate the third element, 4.
+
+The stream is effectively 2^n.
