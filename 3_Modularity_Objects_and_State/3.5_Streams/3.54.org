@@ -1,0 +1,75 @@
+#+Title: Exercise 3.54
+ Define a procedure mul-streams, analogous to add-streams, that produces the elementwise product of its two input streams. Use this together with the stream of integers to complete the following definition of the stream whose nth element (counting from 0) is n + 1 factorial:
+
+#+BEGIN_SRC scheme :eval no
+  (define factorials 
+    (cons-stream 1 (mul-streams ⟨??⟩ ⟨??⟩)))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session mul-streams :results output silent
+  (define the-empty-stream '())
+
+  (define stream-null? null?)
+
+  (define (cons-stream a b)
+    (cons a b))
+
+  (define (stream-car stream) 
+    (car stream))
+
+  (define (stream-cdr stream) 
+    (force (cdr stream)))
+
+    (define false #f)
+    (define true #t)
+
+    (define (stream-ref s n)
+      (if (= n 0)
+          (stream-car s)
+          (stream-ref (stream-cdr s) (- n 1))))
+
+  (define (stream-map proc . argstreams)
+    (if (null? (car argstreams))
+        the-empty-stream
+        (cons-stream
+         (apply proc (map stream-car
+                          argstreams))
+         (delay (apply stream-map
+                       (cons proc 
+                             (map stream-cdr
+                                  argstreams)))))))
+
+  (define (stream-enumerate-interval low high)
+    (if (> low high)
+        the-empty-stream
+        (cons-stream
+         low
+         (delay (stream-enumerate-interval (+ low 1)
+                                           high)))))
+
+  (define (add-streams s1 s2) 
+    (stream-map + s1 s2))
+
+  (define integers 
+    (cons-stream 1 (delay (add-streams ones integers))))
+
+  (define ones (cons-stream 1 (delay ones)))
+
+  (define (mul-stream s1 s2)
+    (stream-map * s1 s2))
+
+  (define factorial
+    (cons-stream 1 (delay (mul-stream factorial integers))))
+
+
+#+END_SRC
+
+* Tests
+
+#+BEGIN_SRC scheme :session mul-streams :exports both
+  (stream-ref factorial 6)
+#+END_SRC
+
+#+RESULTS:
+: 720
+
