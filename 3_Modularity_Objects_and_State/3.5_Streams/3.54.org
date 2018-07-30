@@ -13,22 +13,22 @@ Load the stream module.
   (use-modules (custom-module stream))
 #+END_SRC
 
-#+INCLUDE: ./custom-module/stream.scm
-
 #+BEGIN_SRC scheme :session mul-streams :results output silent
   (define (mul-streams s1 s2)
     (stream-map * s1 s2))
 
-  (define factorial
-    (cons-stream 1 (mul-streams factorial integers)))
+  (define factorials
+    (cons-stream 1 (mul-streams factorials integers)))
 #+END_SRC
 
 * Tests
 
 #+BEGIN_SRC scheme :session mul-streams :exports both
-  (stream-ref factorial 6)
+  (map (lambda (x)
+         (stream-ref factorials x))
+       '(1 2 3 4 5 6 7 8 9 10))
 #+END_SRC
 
 #+RESULTS:
-: 720
+| 1 | 2 | 6 | 24 | 120 | 720 | 5040 | 40320 | 362880 | 3628800 |
 
