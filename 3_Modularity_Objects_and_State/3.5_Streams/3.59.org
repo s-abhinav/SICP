@@ -1,0 +1,75 @@
+#+Title: Exercise 3.59
+
+* Module Loading
+#+BEGIN_SRC scheme :session integrate-series :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+
+* integrate-series
+#+BEGIN_SRC scheme :session integrate-series
+  (define (integrate-series stream)
+    (mul-streams
+     (stream-cdr stream)
+     (div-streams ones integers)))
+#+END_SRC
+
+#+RESULTS:
+
+* integrate-series test
+
+#+BEGIN_SRC scheme :session integrate-series :exports both
+  (map (lambda (x)
+         (stream-ref (integrate-series ones) x))
+       '(0 1 2 3 4 5 6 7 8 9))
+#+END_SRC
+
+#+RESULTS:
+| 1 | 1/2 | 1/3 | 1/4 | 1/5 | 1/6 | 1/7 | 1/8 | 1/9 | 1/10 |
+
+
+* cosine-series
+#+BEGIN_SRC scheme :session integrate-series
+  (define negative-ones
+   (stream-map (lambda (x) (* -1 x)) ones))
+
+  (define cosine-series
+    (cons-stream 1 (mul-streams negative-ones sine-series)))
+#+END_SRC
+
+#+RESULTS:
+
+* sine-series
+#+BEGIN_SRC scheme :session integrate-series
+  (define sine-series
+    (cons-stream 0 cosine-series))
+#+END_SRC
+
+#+RESULTS:
+
+
+* Tests
+**** cosine-series
+#+BEGIN_SRC scheme :session integrate-series :exports both
+  (map (lambda (x)
+         (stream-ref cosine-series x))
+       '(0 1 2 3 4 5 6 7 8 9))
+#+END_SRC
+
+#+RESULTS:
+| 1 | 0 | -1 | 0 | 1 | 0 | -1 | 0 | 1 | 0 |
+
+
+
+**** sine-series
+#+BEGIN_SRC scheme :session integrate-series :exports both
+  (map (lambda (x)
+         (stream-ref sine-series x))
+       '(0 1 2 3 4 5 6 7 8 9))
+#+END_SRC
+
+#+RESULTS:
+| 0 | 1 | 0 | -1 | 0 | 1 | 0 | -1 | 0 | 1 |
+
