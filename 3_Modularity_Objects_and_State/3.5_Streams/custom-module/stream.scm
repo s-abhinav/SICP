@@ -6,6 +6,8 @@
 	   stream-map
 	   stream-enumerate-interval
 	   add-streams
+	   div-streams
+	   mul-streams
 	   integers
 	   ones
 	   scale-stream
@@ -57,6 +59,12 @@
 
 (define (add-streams s1 s2) 
   (stream-map + s1 s2))
+
+(define (mul-streams s1 s2)
+  (stream-map * s1 s2))
+
+(define (div-streams s1 s2)
+  (stream-map / s1 s2))
 
 (define integers 
   (cons-stream 1 (add-streams ones integers)))
