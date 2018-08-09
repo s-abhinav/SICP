@@ -1,0 +1,43 @@
+#+Title: Exercise 3.58
+Give an interpretation of the stream computed by the following procedure:
+
+* Module Loading
+#+BEGIN_SRC scheme :session expand :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+* expand
+#+BEGIN_SRC scheme :session expand
+  (define (expand num den radix)
+    (cons-stream
+     (quotient (* num radix) den)
+     (expand (remainder (* num radix) den) 
+             den 
+             radix)))
+#+END_SRC
+
+#+RESULTS:
+
+(Quotient is a primitive that returns the integer quotient of two integers.)
+
+**** What are the successive elements produced by (expand 1 7 10)? 
+
+#+BEGIN_SRC scheme :session expand :exports both
+  (map (lambda (x) (stream-ref (expand 1 7 10) x))
+       '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))
+#+END_SRC
+
+#+RESULTS:
+| 1 | 4 | 2 | 8 | 5 | 7 | 1 | 4 | 2 | 8 | 5 | 7 | 1 | 4 | 2 | 8 |
+
+**** What is produced by (expand 3 8 10)?
+
+#+BEGIN_SRC scheme :session expand :exports both
+  (map (lambda (x) (stream-ref (expand 3 8 10) x))
+       '(0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15))
+#+END_SRC
+
+#+RESULTS:
+| 3 | 7 | 5 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 | 0 |
