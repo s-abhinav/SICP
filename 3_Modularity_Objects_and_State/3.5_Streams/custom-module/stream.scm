@@ -12,6 +12,7 @@
 	   ones
 	   scale-stream
 	   merge
+	   partial-sums
 	   ))
 
 (define the-empty-stream '())
@@ -31,6 +32,7 @@
   (force (cdr stream)))
 
 (define false #f)
+
 (define true #t)
 
 (define (stream-ref s n)
@@ -88,3 +90,10 @@
 		  (cons-stream s1car
 			       (merge (stream-cdr s1)
 				      (stream-cdr s2)))))))))
+
+(define (partial-sums stream)
+  (cons-stream
+   (stream-car stream)
+   (add-streams
+    (stream-cdr stream)
+    (partial-sums stream))))
