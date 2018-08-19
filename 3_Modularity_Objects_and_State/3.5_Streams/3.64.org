@@ -1,0 +1,51 @@
+#+Title: Exercise 3.64
+Write a procedure stream-limit that takes as arguments a stream and a number (the tolerance). It should examine the stream until it finds two successive elements that differ in absolute value by less than the tolerance, and return the second of the two elements. Using this, we could compute square roots up to a given tolerance by
+
+#+BEGIN_SRC scheme :eval no
+  (define (sqrt x tolerance)
+    (stream-limit (sqrt-stream x) tolerance))
+#+END_SRC
+
+* Module Loading
+#+BEGIN_SRC scheme :session limit
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+* stream-limit
+#+BEGIN_SRC scheme :session limit
+  (define (stream-limit stream tolerance)
+    (let ((first (stream-car stream))
+          (second (stream-car (stream-cdr stream))))
+     (if (< (abs (- first second)) tolerance)
+         second
+         (stream-limit (stream-cdr stream) tolerance))))
+#+END_SRC
+
+#+RESULTS:
+
+* Tests
+
+#+BEGIN_SRC scheme :session limit :exports both
+  (stream-limit (sqrt-stream 9) 0.1)
+#+END_SRC
+
+#+RESULTS:
+: 3.00009155413138
+
+#+BEGIN_SRC scheme :session limit :exports both
+  (stream-limit (sqrt-stream 9) 0.001)
+#+END_SRC
+
+#+RESULTS:
+: 3.000000001396984
+
+#+BEGIN_SRC scheme :session limit :exports both
+  (stream-limit (sqrt-stream 9) 0.0000001)
+#+END_SRC
+
+#+RESULTS:
+: 3.0
