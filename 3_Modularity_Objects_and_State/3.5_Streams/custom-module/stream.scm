@@ -13,6 +13,8 @@
 	   scale-stream
 	   merge
 	   partial-sums
+	   sqrt-improve
+	   sqrt-stream
 	   ))
 
 (define the-empty-stream '())
@@ -97,3 +99,18 @@
    (add-streams
     (stream-cdr stream)
     (partial-sums stream))))
+
+(define (average x y)
+  (/ (+ x y) 2))
+
+(define (sqrt-improve guess x)
+  (average guess (/ x guess)))
+
+(define (sqrt-stream x)
+  (define guesses
+    (cons-stream
+     1.0 (stream-map
+          (lambda (guess)
+            (sqrt-improve guess x))
+          guesses)))
+  guesses)
