@@ -1,0 +1,148 @@
+#+Title: Exercise 3.63
+
+Louis Reasoner asks why the sqrt-stream procedure was not written in the following more straightforward way, without the local variable guesses:
+
+#+BEGIN_SRC scheme eval: no
+  (define (sqrt-stream x)
+    (cons-stream
+     1.0
+     (stream-map (lambda (guess)
+                   (sqrt-improve guess x))
+                 (sqrt-stream x))))
+#+END_SRC
+
+Alyssa P. Hacker replies that this version of the procedure is considerably less efficient because it performs redundant computation. Explain Alyssa’s answer. Would the two versions still differ in efficiency if our implementation of delay used only (lambda () ⟨exp⟩) without using the optimization provided by memo-proc (3.5.1)?
+
+* Module Loading
+#+BEGIN_SRC scheme :session 3-63
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+* Debug cons-stream
+#+BEGIN_SRC scheme :eval no
+  (cons a (delay b)
+        ((lambda ()
+           (display a)
+           (newline)
+           (cons a (delay b)))))
+#+END_SRC
+* Explanation
+#+BEGIN_SRC scheme :session 3-63 :exports both
+  (define (sqrt-stream x)
+    (cons-stream
+     1.0
+     (stream-map (lambda (guess)
+                   (sqrt-improve guess x))
+                 (sqrt-stream x))))
+
+  '(
+  1.0
+  1.0
+  45.0
+  1.0
+  45.0
+  23.488888888888887
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  9.434004094099471
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  9.434004094099471
+  9.433981132084547
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  9.434004094099471
+  9.433981132084547
+  9.433981132056605
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  9.434004094099471
+  9.433981132084547
+  9.433981132056605
+  9.433981132056605
+  1.0
+  45.0
+  23.488888888888887
+  13.638957216440659
+  10.08219138705058
+  9.454818691995161
+  9.434004094099471
+  9.433981132084547
+  9.433981132056605
+  9.433981132056605
+  9.433981132056605
+    )
+#+END_SRC
+
+#+RESULTS:
+| 1.0 | 1.0 | 45.0 | 1.0 | 45.0 | 23.488888888888887 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 9.433981132084547 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 9.433981132084547 | 9.433981132056605 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 9.433981132084547 | 9.433981132056605 | 9.433981132056605 | 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 9.433981132084547 | 9.433981132056605 | 9.433981132056605 | 9.433981132056605 |
+
+#+BEGIN_SRC scheme :session 3-63 :exports both
+    (define (sqrt-stream x)
+      (define guesses
+        (cons-stream
+         1.0 (stream-map
+              (lambda (guess)
+                (sqrt-improve guess x))
+              guesses)))
+      guesses)
+
+    (stream-ref (sqrt-stream 89) 10)
+
+  '(
+    1.0
+    45.0
+    23.488888888888887
+    13.638957216440659
+    10.08219138705058
+    9.454818691995161
+    9.434004094099471
+    9.433981132084547
+    9.433981132056605
+    9.433981132056605
+    9.433981132056605
+    )
+
+#+END_SRC
+
+#+RESULTS:
+| 1.0 | 45.0 | 23.488888888888887 | 13.638957216440659 | 10.08219138705058 | 9.454818691995161 | 9.434004094099471 | 9.433981132084547 | 9.433981132056605 | 9.433981132056605 | 9.433981132056605 |
+
+While setting cons-stream in debug mode, printing the head of cons-stream every time it's used, it can be noticed that in the less efficient version, the procedure is calling (sqrt-stream x) on every evaluation of the delayed tail. This is causing stream-map to go through the whole list everytime it has to compute more values.
+
+Contrary to the efficient version, guesses is a reference to the stream within sqrt-stream. When stream-map needs another value, it does not have to construct another new list as the less-efficient version is doing.
