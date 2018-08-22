@@ -15,6 +15,8 @@
 	   partial-sums
 	   sqrt-improve
 	   sqrt-stream
+	   euler-transform
+	   accelerated-sequence
 	   ))
 
 (define the-empty-stream '())
@@ -114,3 +116,26 @@
             (sqrt-improve guess x))
           guesses)))
   guesses)
+
+(define (square x)
+  (* x x))
+
+(define (euler-transform s)
+  (let ((s0 (stream-ref s 0))     ; Sₙ₋₁
+        (s1 (stream-ref s 1))     ; Sₙ
+        (s2 (stream-ref s 2)))    ; Sₙ₊₁
+    (cons-stream
+     (- s2 (/ (square (- s2 s1))
+              (+ s0 (* -2 s1) s2)))
+     (euler-transform (stream-cdr s)))))
+
+(define (make-tableau transform s)
+  (cons-stream
+   s
+   (make-tableau
+    transform
+    (transform s))))
+
+(define (accelerated-sequence transform s)
+  (stream-map stream-car
+              (make-tableau transform s)))
