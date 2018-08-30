@@ -1,0 +1,50 @@
+#+Title: Exercise 3.69
+Write a procedure triples that takes three infinite streams, S, T, and U, and produces the stream of triples (Si,Tj,Uk) such that i≤j≤k. Use triples to generate the stream of all Pythagorean triples of positive integers, i.e., the triples (i,j,k) such that i≤j and i2+j2=k2.
+
+#+BEGIN_SRC scheme :session 3-69 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-69 :exports both
+  (define (pairs s t)
+    (cons-stream
+     (list (stream-car s) (stream-car t))
+     (interleave
+      (stream-map (lambda (x)
+                    (list (stream-car s) x))
+                  (stream-cdr t))
+      (pairs (stream-cdr s) (stream-cdr t)))))
+
+  (define (triples s t u)
+    (cons-stream
+     (list (stream-car s) (stream-car t) (stream-car u))
+     (interleave
+      (stream-map (lambda (x)
+                    (append (list (stream-car s)) x))
+                  (stream-cdr (pairs t u)))
+      (triples (stream-cdr s) (stream-cdr t) (stream-cdr u)))))
+
+  (define (square x) (* x x))
+
+  (define pythagorean-triples
+   (stream-filter (lambda (x)
+                    (= (+
+                        (square (list-ref x 0))
+                        (square (list-ref x 1)))
+                       (square (list-ref x 2))))
+                  (triples integers integers integers)))
+
+  (map (lambda (x) (stream-ref pythagorean-triples x))
+       '(0 1 2 3 4))
+#+END_SRC
+
+#+RESULTS:
+| 3 |  4 |  5 |
+| 6 |  8 | 10 |
+| 5 | 12 | 13 |
+| 9 | 12 | 15 |
+| 8 | 15 | 17 |
