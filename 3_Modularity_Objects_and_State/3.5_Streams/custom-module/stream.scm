@@ -18,6 +18,7 @@
 	   euler-transform
 	   accelerated-sequence
 	   interleave
+	   stream-filter
 	   ))
 
 (define the-empty-stream '())
@@ -146,3 +147,16 @@
       s2
       (cons-stream (stream-car s1)
 		   (interleave s2 (stream-cdr s1)))))
+
+(define (stream-filter pred stream)
+  (cond ((stream-null? stream)
+         the-empty-stream)
+        ((pred (stream-car stream))
+         (cons-stream
+          (stream-car stream)
+          (stream-filter
+           pred
+           (stream-cdr stream))))
+        (else (stream-filter
+               pred
+               (stream-cdr stream)))))
