@@ -1,5 +1,7 @@
 (define-module (custom-module stream)
-  :export (cons-stream
+  :export (
+	   stream-null?
+	   cons-stream
 	   stream-car
 	   stream-cdr
 	   stream-ref
@@ -19,6 +21,7 @@
 	   accelerated-sequence
 	   interleave
 	   stream-filter
+	   pairs
 	   ))
 
 (define the-empty-stream '())
@@ -160,3 +163,12 @@
         (else (stream-filter
                pred
                (stream-cdr stream)))))
+
+(define (pairs s t)
+  (cons-stream
+   (list (stream-car s) (stream-car t))
+   (interleave
+    (stream-map (lambda (x)
+                  (list (stream-car s) x))
+                (stream-cdr t))
+    (pairs (stream-cdr s) (stream-cdr t)))))
