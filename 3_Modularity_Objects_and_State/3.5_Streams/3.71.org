@@ -1,0 +1,47 @@
+#+BEGIN_SRC scheme :session 3-71 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-71 :results value table :exports both
+  (define (cube x)
+    (* x x x))
+
+  (define (weight pair)
+    (let ((i (car pair))
+          (j (cadr pair)))
+      (+ (cube i) (cube j))))
+
+  (define (filter-duplicate-weight stream)
+    (cond ((stream-null? stream)
+           the-empty-stream)
+          (
+           (= (weight (stream-car stream))
+              (weight (stream-car (stream-cdr stream))))
+           (cons-stream
+            (list
+             (stream-car stream)
+             (stream-car (stream-cdr stream))
+             (weight (stream-car stream)))
+            (filter-duplicate-weight (stream-cdr stream))))
+          (else (filter-duplicate-weight
+                 (stream-cdr stream)))))
+
+  (define ramanujan-numbers
+    (filter-duplicate-weight (pairs-ordered integers integers weight)))
+
+  (append '(("*#*" *First* *Second* *Weight*))
+          (map (lambda (x) (cons x (stream-ref ramanujan-numbers x)))
+               '(0 1 2 3 4)))
+#+END_SRC
+
+#+RESULTS:
+| *#* | *First* | *Second* | *Weight* |
+|   0 | (1 12)  | (9 10)   |     1729 |
+|   1 | (2 16)  | (9 15)   |     4104 |
+|   2 | (2 24)  | (18 20)  |    13832 |
+|   3 | (10 27) | (19 24)  |    20683 |
+|   4 | (4 32)  | (18 30)  |    32832 |
