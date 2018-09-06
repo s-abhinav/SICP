@@ -1,0 +1,44 @@
+#+Title: Exercise 3.73
+
+#+BEGIN_SRC scheme :session 3-73 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-73 :exports both
+  (define (integral integrand initial-value dt)
+    (define int
+      (cons-stream
+       initial-value
+       (add-streams (scale-stream integrand dt)
+                    int)))
+    int)
+
+  (define (RC R C dt)
+    (define (p i Vo)
+      (add-streams
+       (integral (scale-stream i (/ 1 C)) Vo dt)
+       (scale-stream i R)))
+    p)
+
+  (define RC1 (RC 5 1 0.1))
+
+  (define steady-1-amp (scale-stream ones 1))
+  (define negative-0.1-stream (scale-stream ones -0.1))
+  (define positive-0.1-stream (scale-stream ones 0.1))
+
+  (define fluctuating-1-amp
+    (interleave
+     (add-streams steady-1-amp negative-0.1-stream)
+     (add-streams steady-1-amp positive-0.1-stream)))
+
+  (map (lambda (x) (floor (stream-ref (RC1 fluctuating-1-amp 12) x)))
+       '(0 1 2 3 4 5 6 7 8 9 10))
+#+END_SRC
+
+#+RESULTS:
+| 16.0 | 17.0 | 16.0 | 17.0 | 16.0 | 17.0 | 17.0 | 18.0 | 17.0 | 18.0 | 17.0 |
+
