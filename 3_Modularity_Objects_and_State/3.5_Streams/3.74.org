@@ -1,0 +1,23 @@
+#+Title: Exercise 3.74
+
+#+BEGIN_SRC scheme :session 3-74 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :eval no
+  (define zero-crossings
+    (stream-map sign-change-detector 
+                sense-data 
+                ⟨expression⟩))
+#+END_SRC
+
+#+BEGIN_SRC scheme :eval no :session 3.74
+  (define zero-crossings
+    (stream-map sign-change-detector 
+                sense-data 
+                (cons-stream 0 (stream-cdr sense-data))))
+#+END_SRC
