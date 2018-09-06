@@ -1,0 +1,35 @@
+#+Title: Exercise 3.76
+
+#+BEGIN_SRC scheme :session 3-76 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-76 :exports both
+  (define (smooth s)
+    (cons-stream
+     (/ (+
+         (stream-car s)
+         (stream-car (stream-cdr s)))
+        2.0)
+     (smooth (stream-cdr s))))
+
+  (define smoothed-integers (smooth integers))
+
+  (map (lambda (x) (stream-ref smoothed-integers x))
+       '(0 1 2 3 4 5))
+#+END_SRC
+
+#+RESULTS:
+| 1.5 | 2.5 | 3.5 | 4.5 | 5.5 | 6.5 |
+
+#+BEGIN_SRC scheme :session 3-76 :eval no
+  (define (make-zero-crossings input-stream)
+    (cons-stream
+     (sign-change-detector (smooth s))
+     (make-zero-crossings
+      (stream-cdr input-stream))))
+#+END_SRC
