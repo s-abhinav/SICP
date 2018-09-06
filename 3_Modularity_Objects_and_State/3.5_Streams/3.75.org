@@ -1,0 +1,59 @@
+#+Title: Exercise 3.75
+
+#+BEGIN_SRC scheme :session 3-75 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+**** Original Version
+#+BEGIN_SRC scheme :eval no
+  (define (make-zero-crossings
+           input-stream last-value)
+    (cons-stream
+     (sign-change-detector 
+      (stream-car input-stream) 
+      last-value)
+     (make-zero-crossings 
+      (stream-cdr input-stream)
+      (stream-car input-stream))))
+#+END_SRC
+
+**** Louis Reasoner's Version
+#+BEGIN_SRC scheme :session 3-75 :eval no
+  (define (make-zero-crossings
+           input-stream last-value)
+    (let ((avpt
+           (/ (+ (stream-car input-stream)
+                 last-value)
+              2)))
+      (cons-stream
+       (sign-change-detector avpt last-value)
+       (make-zero-crossings
+        (stream-cdr input-stream) avpt))))
+#+END_SRC
+
+**** Fixed Version
+
+The sign-change-detector was not implemented so
+that this procedure could be tested, although,
+it could have been done.
+
+The next average value can be determined without
+using a third argument.
+#+BEGIN_SRC scheme :session 3-75 :eval no
+  (define (make-zero-crossings
+           input-stream last-value)
+    (let ((avpt
+           (/ (+ (stream-car input-stream)
+                 last-value)
+              2))
+          (next-avpt
+           (/ (+ (stream-car (stream-cdr input-stream))
+                 (stream-car input-stream))
+              2)))
+      (cons-stream
+       (sign-change-detector avpt next-avpt)
+       (make-zero-crossings
+        (stream-cdr input-stream) next-avpt))))
+#+END_SRC
