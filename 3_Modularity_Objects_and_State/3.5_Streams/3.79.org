@@ -1,0 +1,17 @@
+#+Title: Exercise 3.79
+
+#+BEGIN_SRC scheme :session 3-79 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-79 :exports none
+  (define (solve-2nd a b dt y0 dy0 f)
+    (define y (integral (delay dy) y0 dt))
+    (define dy (integral (delay dy0) ddy dt))
+    (define ddy (f dy y))
+    y)
+#+END_SRC
