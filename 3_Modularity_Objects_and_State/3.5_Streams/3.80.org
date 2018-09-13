@@ -1,0 +1,42 @@
+#+Title: Exercise 3.80
+
+#+BEGIN_SRC scheme :session 3-80 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-80 :exports both :results value table
+  (define (RLC R L C dt)
+    (lambda (vc0 il0)
+     (define vc (integral (delay dvc) vc0 dt))
+     (define il (integral (delay dil) il0 dt))
+     (define dvc (scale-stream il (/ -1 C)))
+     (define dil (add-streams
+                  (scale-stream vc (/ 1 L))
+                  (scale-stream il (/ (* -1 R) L))))
+     (cons vc il)))
+
+  (define series-RLC ((RLC 1 1 0.2 0.1) 10 0))
+
+  (map (lambda (x)
+         (list
+          (format #f "~1,2f" (stream-ref (car series-RLC) x))
+          (format #f "~1,2f" (stream-ref (cdr series-RLC) x))))
+       '(0 1 2 3 4 5 6 7 8 9))
+#+END_SRC
+
+#+RESULTS:
+| 10.00 |  .00 |
+| 10.00 | 1.00 |
+|  9.50 | 1.90 |
+|  8.55 | 2.66 |
+|  7.22 | 3.25 |
+|  5.60 | 3.65 |
+|  3.77 | 3.84 |
+|  1.85 | 3.83 |
+|  -.07 | 3.64 |
+| -1.88 | 3.27 |
+
