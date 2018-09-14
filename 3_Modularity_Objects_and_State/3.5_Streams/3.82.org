@@ -1,0 +1,54 @@
+#+Title: Exercise 3.82
+
+#+BEGIN_SRC scheme :session 3-82 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+The random stream procedure from 3.81 was not used since the randomness is not good enough.
+#+BEGIN_SRC scheme :session 3-82 :exports both
+  (define (rand) (random 100000))
+
+  (define (random-numbers)
+    (cons-stream (rand) (random-numbers)))
+
+  (define (map-successive-pairs f s)
+    (cons-stream
+     (f (stream-car s) 
+        (stream-car (stream-cdr s)))
+     (map-successive-pairs 
+      f (stream-cdr (stream-cdr s)))))
+
+  (define cesaro-stream
+    (map-successive-pairs
+     (lambda (r1 r2) (= (gcd r1 r2) 1))
+     (random-numbers)))
+
+  (define (monte-carlo experiment-stream 
+                       passed 
+                       failed)
+    (define (next passed failed)
+      (cons-stream
+       (/ passed (+ passed failed))
+       (monte-carlo
+        (stream-cdr experiment-stream) 
+        passed 
+        failed)))
+    (if (stream-car experiment-stream)
+        (next (+ passed 1) failed)
+        (next passed (+ failed 1))))
+
+  (define pi
+    (stream-map
+     (lambda (p) (sqrt (/ 6 p)))
+     (monte-carlo cesaro-stream 0 0)))
+
+  (stream-ref pi 100000)
+#+END_SRC
+
+#+RESULTS:
+: 3.1410584049716883
+
