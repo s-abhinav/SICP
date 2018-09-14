@@ -1,0 +1,30 @@
+#+Title: Exercise 3.81
+
+#+BEGIN_SRC scheme :session 3-81 :exports none
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (custom-module stream))
+#+END_SRC
+
+#+RESULTS:
+
+#+BEGIN_SRC scheme :session 3-81 :exports both
+  (define (rand s)
+    (cons-stream
+     (stream-car s)
+     (cond
+      ((= (stream-car (stream-cdr s)) -1)
+       (rand (cons-stream (+ 0.1 (stream-car s))
+                          (stream-cdr (stream-cdr s)))))
+      ((not (= (stream-car (stream-cdr s)) (stream-car s)))
+       (rand (stream-cdr s))))))
+
+  (define input-stream (cons-stream 7 (cons-stream -1 (cons-stream -1 (cons-stream 8 (cons-stream -1 (cons-stream -1 -1)))))))
+
+  (map (lambda (x) (stream-ref (rand input-stream) x))
+       '(0 1 2 3 4 5))
+#+END_SRC
+
+#+RESULTS:
+| 7 | 7.1 | 7.2 | 8 | 8.1 | 8.2 |
+
