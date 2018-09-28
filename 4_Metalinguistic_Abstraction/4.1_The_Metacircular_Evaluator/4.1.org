@@ -1,0 +1,56 @@
+#+Title: Exercise 4.1
+Notice that we cannot tell whether the metacircular evaluator evaluates operands from left to right or from right to left. Its evaluation order is inherited from the underlying Lisp: If the arguments to cons in list-of-values are evaluated from left to right, then list-of-values will evaluate operands from left to right; and if the arguments to cons are evaluated from right to left, then list-of-values will evaluate operands from right to left.
+
+Write a version of list-of-values that evaluates operands from left to right regardless of the order of evaluation in the underlying Lisp. Also write a version of list-of-values that evaluates operands from right to left.
+
+Original version
+#+BEGIN_SRC scheme :eval no
+  (define (list-of-values exps env)
+    (if (no-operands? exps)
+        '()
+        (cons (eval (first-operand exps) env)
+              (list-of-values
+               (rest-operands exps)
+               env))))
+#+END_SRC
+
+With this version, the first operand is always evaluated before cons is called.
+This ensures that, even though cons evaluates its second argument first, the first
+argument is evaluated first before it's sent into cons.
+#+BEGIN_SRC scheme :eval no
+  (define (list-of-values exps env)
+    (if (no-operands? exps)
+        '()
+        (let ((evaluated-operand (eval (first-operand exps) env)))
+          (cons evaluated-operand
+           (list-of-values
+            (rest-operands exps)
+            env)))))
+#+END_SRC
+
+This uses two reverses to evaluate the last operand first.
+It reverses the list so that the last operand comes first in the list, and
+the rest of the operations are similar to the version of list of values which
+evaluates from left to right. The result is again reversed so that the evaluated
+operands appear in the same order as they were passed to the procedure.
+#+BEGIN_SRC scheme :eval no
+  (define (list-of-values exps env)
+    (if (no-operands? exps)
+        '()
+        (let* ((reversed-exps (reverse exps))
+               (evaluated-operand (eval (first-operand reversed-exps) env)))
+          (reverse (cons evaluated-operand
+                         (list-of-values
+                          (rest-operands exps)
+                          env))))))
+
+  (define (reverse exps)
+    (define (reverse-helper exps reversed)
+      (cond ((null? exps) reversed)
+            ((not (pair? exps)) exps)
+            (else
+             (reverse-helper
+              (cdr exps)
+              (cons (car exps) reversed)))))
+    (reverse-helper exps '()))
+#+END_SRC
