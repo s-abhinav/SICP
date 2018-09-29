@@ -32,7 +32,7 @@ Rewrite eval so that the dispatch is done in data-directed style. Compare this w
                    (operands exp)
                    env)))
           (else (eval ((get 'eval (operator exp))
-                  (operands exp)) env)))))
+                  (operands exp)) env))))
 
   (define (operator exp) (car exp))
 
