@@ -1,0 +1,46 @@
+#+Title: Exercise 4.6
+
+Let expressions are derived expressions, because
+
+(let ((⟨var₁⟩ ⟨exp₁⟩) … (⟨var₁⟩ ⟨expn⟩))
+  ⟨body⟩)
+is equivalent to
+
+((lambda (⟨var₁⟩ … ⟨varn⟩)
+   ⟨body⟩)
+ ⟨exp₁⟩
+ …
+ ⟨expn⟩)
+Implement a syntactic transformation let->combination that reduces evaluating let expressions to evaluating combinations of the type shown above, and add the appropriate clause to eval to handle let expressions.
+
+**** let->combination
+#+BEGIN_SRC scheme :eval no
+  (define (let? exp)
+    (tagged-list? exp 'let))
+
+  (define (let-expression-definitions exp)
+    (cadr exp))
+
+  (define (let-body exp)
+    (caddr exp))
+
+  (define (let-vars expression-definitions)
+    (cond ((null? expression-definitions) '())
+          (cons (caar expression-definitions)
+                (let-vars (cdr expression-definitions)))))
+
+  (define (let-exprs expression-definitions)
+    (cond ((null? expression-definitions) '())
+          (cons (cadr expression-definitions)
+                (let-vars (cdr expression-definitions)))))
+
+  (define (let->combination exp)
+    (list
+     '(lambda
+          (let-vars (let-expression-definitions exp))
+        (let-body exp))
+     (let-exprs (let-expression-definitions exp))))
+#+END_SRC
+
+**** eval modification
+It is sufficient to add ((let? exp) (let->combination exp)) to cond in eval.
