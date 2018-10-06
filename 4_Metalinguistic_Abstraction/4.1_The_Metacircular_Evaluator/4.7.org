@@ -15,7 +15,7 @@ returns 39.
 Using a procedure to recursively build the subsequent variable declaration similar to how it is done for the cond expansion.
 
 **** and write a procedure let*->nested-lets that performs this transformation. 
-#+BEGIN_SRC scheme :session nested-lets :results output code
+#+BEGIN_SRC scheme :session nested-lets :results output code :exports both
   (define (let*-expression-definitions exp)
     (cadr exp))
 
@@ -42,7 +42,7 @@ Using a procedure to recursively build the subsequent variable declaration simil
 #+END_SRC
 
 #+RESULTS:
-#+BEGIN_SRC scheme
+#+BEGIN_SRC scheme :exports both
 (let ((x 3)) (let ((y (+ x 2))) (let ((z (+ x y 5))) (* x z))))
 #+END_SRC
 
