@@ -1,0 +1,129 @@
+#+Title: Exercise 4.8
+
+#+BEGIN_SRC scheme :session let-named
+   (define (let-named? exp)
+     (symbol? (cadr exp)))
+
+   (define (let-named-var exp)
+     (cadr exp))
+
+   (define (let-named-bindings exp)
+     (caddr exp))
+
+   (define (let-named-bindings-parameters exp)
+     (cond ((null? exp) '())
+           (else (cons
+                  (caar exp)
+                  (let-named-bindings-parameters (cdr exp))))))
+
+   (define (let-named-bindings-seed-values exp)
+     (cond ((null? exp) '())
+           (else (cons
+                  (car (cdr (car exp)))
+                  (let-named-bindings-seed-values (cdr exp))))))
+
+   (define (let-named-body exp)
+     (cadddr exp))
+
+   (define (let-expression-definitions exp)
+     (cadr exp))
+
+   (define (let-body exp)
+     (caddr exp))
+
+   (define (let-vars expression-definitions)
+     (cond ((null? expression-definitions) '())
+           (cons (caar expression-definitions)
+                 (let-vars (cdr expression-definitions)))))
+
+   (define (let-exprs expression-definitions)
+     (cond ((null? expression-definitions) '())
+           (cons (cadr expression-definitions)
+                 (let-vars (cdr expression-definitions)))))
+
+  (define (let->combination exp)
+    (cond
+     ((let-named? exp)
+      (list
+       (list
+        'lambda '()
+        (list 'define (let-named-var exp)
+              (list 'lambda
+                    (let-named-bindings-parameters
+                     (let-named-bindings exp))
+                    (let-named-body exp)))
+        (list 'apply (let-named-var test-exp) (list 'quote (let-named-bindings-seed-values (let-named-bindings test-exp)))))))
+     (else
+      (list
+       '(lambda
+            (let-vars (let-expression-definitions exp))
+          (let-body exp))
+       (let-exprs (let-expression-definitions exp))))))
+
+   (define test-exp
+     '(let fib-iter ((a 1)
+                     (b 0)
+                     (count 8))
+        (if (= count 0)
+            b
+            (fib-iter (+ a b) a (- count 1)))))
+#+END_SRC
+
+#+RESULTS:
+
+* Tests
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+   (display (let-named? test-exp))
+#+END_SRC
+
+#+RESULTS:
+#t
+
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+  (display (let-named-var test-exp))
+#+END_SRC
+
+#+RESULTS:
+fib-iter
+
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+  (display (let-named-bindings test-exp))
+#+END_SRC
+
+#+RESULTS:
+((a 1) (b 0) (count 8))
+
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+ (display (let-named-body test-exp))
+#+END_SRC
+
+#+RESULTS:
+(if (= count 0) b (fib-iter (+ a b) a (- count 1)))
+
+ 
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+(display (let-named-bindings-parameters (let-named-bindings test-exp)))
+#+END_SRC
+
+#+RESULTS:
+(a b count)
+
+#+BEGIN_SRC scheme :session let-named :results replace output raw :exports both
+  (display (let-named-bindings-seed-values (let-named-bindings test-exp)))
+#+END_SRC
+
+#+RESULTS:
+(1 0 8)
+
+#+BEGIN_SRC scheme :session let-named :results replace output code :exports both
+  (display (let->combination test-exp))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+((lambda () (define fib-iter (lambda (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (apply fib-iter (quote (1 0 8)))))
+#+END_SRC
+
+#+RESULTS:
+: 21
+
