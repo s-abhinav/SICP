@@ -120,10 +120,9 @@ fib-iter
 #+END_SRC
 
 #+RESULTS:
-#+BEGIN_SRC scheme
+#+BEGIN_SRC scheme :exports both
 ((lambda () (define fib-iter (lambda (a b count) (if (= count 0) b (fib-iter (+ a b) a (- count 1))))) (apply fib-iter (quote (1 0 8)))))
 #+END_SRC
 
 #+RESULTS:
 : 21
-
