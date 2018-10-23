@@ -1,0 +1,66 @@
+#+Title: Exercise 4.9
+
+Many languages support a variety of iteration constructs, such as do, for, while, and until. In Scheme, iterative processes can be expressed in terms of ordinary procedure calls, so special iteration constructs provide no essential gain in computational power. On the other hand, such constructs are often convenient. Design some iteration constructs, give examples of their use, and show how to implement them as derived expressions.
+
+#+BEGIN_SRC scheme :session 4-9
+  (define (for? expr)
+    (eq? 'for (car expr)))
+
+  (define (for-initializer expr)
+    (cadr expr))
+
+  (define (for-predicate expr)
+    (caddr expr))
+
+  (define (for-update expr)
+    (cadddr expr))
+
+  (define (for-body expr)
+    (list-ref expr 4))
+
+  (define (for->derived expr)
+    (list 'let (list (for-initializer expr))
+          (list 'define '(iteration)
+                (list 'if (for-predicate expr)
+                      (list 'begin
+                            (for-body expr)
+                            (for-update expr)
+                            (list 'iteration))))
+          (list 'iteration)))
+#+END_SRC
+
+* Test
+#+BEGIN_SRC scheme :session 4-9 :results output code :exports both
+  (define test-for-expr
+    '(for (i 0) (< i 10) (set! i (+ 1 i))
+          (begin (display i)
+                 (newline))))
+
+  (display (for->derived test-for-expr))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme :results output raw :exports both
+  (let ((i 0))
+    (define (iteration)
+      (if (< i 10)
+          (begin
+            (begin
+              (display i)
+              (newline))
+            (set! i (+ 1 i))
+            (iteration))))
+    (iteration))
+#+END_SRC
+
+#+RESULTS:
+0
+1
+2
+3
+4
+5
+6
+7
+8
+9
