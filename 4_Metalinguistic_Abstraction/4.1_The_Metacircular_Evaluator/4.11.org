@@ -1,0 +1,253 @@
+#+Title: Exercise 4.11
+ Instead of representing a frame as a pair of lists, we can represent a frame as a list of bindings, where each binding is a name-value pair. Rewrite the environment operations to use this alternative representation.
+
+#+BEGIN_SRC scheme :eval no
+  (define (enclosing-environment env) (cdr env))
+
+  (define (first-frame env) (car env))
+
+  (define the-empty-environment '())
+
+  (define (make-frame variables values)
+    (cons variables values))
+
+  (define (frame-variables frame) (car frame))
+
+  (define (frame-values frame) (cdr frame))
+
+  (define (add-binding-to-frame! var val frame)
+    (set-car! frame (cons var (car frame)))
+    (set-cdr! frame (cons val (cdr frame))))
+
+  (define (extend-environment vars vals base-env)
+    (if (= (length vars) (length vals))
+        (cons (make-frame vars vals) base-env)
+        (if (< (length vars) (length vals))
+            (error "Too many arguments supplied" vars vals)
+            (error "Too few arguments supplied" vars vals))))
+
+  (define (lookup-variable-value var env)
+    (define (env-loop env)
+      (define (scan vars vals)
+        (cond ((null? vars)
+               (env-loop (enclosing-environment env)))
+              ((eq? var (car vars))
+               (car vals))
+              (else (scan (cdr vars) (cdr vals)))))
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable" var)
+          (let ((frame (first-frame env)))
+            (scan (frame-variables frame)
+                  (frame-values frame)))))
+    (env-loop env))
+
+  (define (set-variable-value! var val env)
+    (define (env-loop env)
+      (define (scan vars vals)
+        (cond ((null? vars)
+               (env-loop (enclosing-environment env)))
+              ((eq? var (car vars))
+               (set-car! vals val))
+              (else (scan (cdr vars) (cdr vals)))))
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable -- SET!" var)
+          (let ((frame (first-frame env)))
+            (scan (frame-variables frame)
+                  (frame-values frame)))))
+    (env-loop env))
+
+  (define (define-variable! var val env)
+    (let ((frame (first-frame env)))
+      (define (scan vars vals)
+        (cond ((null? vars)
+               (add-binding-to-frame! var val frame))
+              ((eq? var (car vars))
+               (set-car! vals val))
+              (else (scan (cdr vars) (cdr vals)))))
+      (scan (frame-variables frame)
+            (frame-values frame))))
+
+#+END_SRC
+
+List of bindings
+#+BEGIN_SRC scheme :session environment 
+  (define frame (list (cons 'a '(1)) (cons 'b '(2))))
+
+  (define env (list frame))
+
+  (define (enclosing-environment env) (cdr env))
+
+  (define (first-frame env) (car env))
+
+  (define the-empty-environment '())
+
+  (define (make-frame variables values)
+    (cond ((null? variables) '())
+          (else (cons
+                 (cons (car variables) (cons (car values) '()))
+                 (make-frame (cdr variables) (cdr values))))))
+
+  (define (frame-variables frame)
+    (cond ((null? frame) '())
+          (else
+           (cons (caar frame) (frame-variables (cdr frame))))))
+
+  (define (frame-values frame)
+    (cond ((null? frame) '())
+          (else
+           (cons (cadar frame) (frame-values (cdr frame))))))
+
+  (define (add-binding-to-frame! var val frame)
+    (set-cdr! frame (cons (car frame) (cdr frame)))
+    (set-car! frame (list var val)))
+
+  (define (extend-environment vars vals base-env)
+    (if (= (length vars) (length vals))
+        (cons (make-frame vars vals) base-env)
+        (if (< (length vars) (length vals))
+            (error "Too many arguments supplied" vars vals)
+            (error "Too few arguments supplied" vars vals))))
+
+  (define (lookup-variable-value var env)
+    (define (env-loop env)
+      (define (scan bindings)
+        (cond ((null? bindings)
+               (env-loop (enclosing-environment env)))
+              ((eq? var (caar bindings))
+               (cadar bindings))
+              (else (scan (cdr bindings)))))
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable" var)
+          (let ((frame (first-frame env)))
+            (scan frame))))
+    (env-loop env))
+
+  (define (set-variable-value! var val env)
+    (define (env-loop env)
+      (define (scan bindings)
+        (cond ((null? bindings)
+               (env-loop (enclosing-environment env)))
+              ((eq? var (caar bindings))
+               (set-cdr! (car bindings) (cons val '())))
+              (else (scan (cdr bindings)))))
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable -- SET!" var)
+          (let ((frame (first-frame env)))
+            (scan frame))))
+    (env-loop env))
+
+  (define (define-variable! var val env)
+    (let ((frame (first-frame env)))
+      (define (scan bindings)
+        (cond ((null? bindings)
+               (add-binding-to-frame! var val frame))
+              ((eq? var (caar bindings))
+               (set-cdr! (car bindings) (cons val '())))
+              (else (scan (cdr bindings)))))
+      (scan frame)))
+
+#+END_SRC
+
+#+RESULTS:
+
+* Tests
+**** Show the environment
+#+BEGIN_SRC scheme :session environment :exports both
+env
+#+END_SRC
+
+#+RESULTS:
+| (a 1) | (b 2) |
+
+**** first-frame
+#+BEGIN_SRC scheme :session environment :exports both
+(first-frame env)
+#+END_SRC
+
+#+RESULTS:
+| a | 1 |
+| b | 2 |
+
+**** make-frame
+#+BEGIN_SRC scheme :session environment :exports both
+(make-frame '(x y) '(1 2))
+#+END_SRC
+
+#+RESULTS:
+| x | 1 |
+| y | 2 |
+
+**** frame-variables
+#+BEGIN_SRC scheme :session environment :exports both
+(frame-variables frame)
+#+END_SRC
+
+#+RESULTS:
+| a | b |
+
+**** frame-values
+#+BEGIN_SRC scheme :session environment :exports both
+(frame-values frame)
+#+END_SRC
+
+#+RESULTS:
+| 1 | 2 |
+
+**** add-binding-to-frame!
+#+BEGIN_SRC scheme :session environment :exports both
+(add-binding-to-frame! 'c 5 frame)
+frame
+#+END_SRC
+
+#+RESULTS:
+| c | 5 |
+| a | 1 |
+| b | 2 |
+
+#+RESULTS:
+
+**** extend-environment
+#+BEGIN_SRC scheme :session environment :exports both
+  (extend-environment '(x y) '(7 8) env)
+#+END_SRC
+
+#+RESULTS:
+| (x 7) | (y 8) |       |
+| (c 5) | (a 1) | (b 2) |
+
+**** lookup-variable-value
+#+BEGIN_SRC scheme :session environment :exports both
+  (lookup-variable-value 'c env)
+#+END_SRC
+
+#+RESULTS:
+: 5
+
+**** lookup-variable-value
+#+BEGIN_SRC scheme :session environment :exports both
+  (lookup-variable-value
+   'x
+   (extend-environment '(x y) '(7 8) env))
+#+END_SRC
+
+#+RESULTS:
+: 7
+
+**** set-variable-value!
+#+BEGIN_SRC scheme :session environment :exports both
+  (set-variable-value! 'c 19 env)
+  env
+#+END_SRC
+
+#+RESULTS:
+| (c 19) | (a 1) | (b 2) |
+
+**** define-variable-value!
+#+BEGIN_SRC scheme :session environment :exports both
+  (define-variable! 'p 6 env)
+  env
+#+END_SRC
+
+#+RESULTS:
+| (p 6) | (c 19) | (a 1) | (b 2) |
+
