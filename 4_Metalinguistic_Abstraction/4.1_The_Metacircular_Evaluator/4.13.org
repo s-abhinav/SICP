@@ -1,0 +1,113 @@
+#+Title: Exercise 4.13
+
+ Scheme allows us to create new bindings for variables by means of ~define~, but provides no way to get rid of bindings.  
+**** Implement for the evaluator a special form ~make-unbound!~ that removes the binding of a given symbol from the environment in which the ~make-unbound!~ expression is evaluated. 
+
+#+BEGIN_SRC scheme :session make-unbound
+  (define (enclosing-environment env) (cdr env))
+
+  (define (first-frame env) (car env))
+
+  (define the-empty-environment '())
+
+  (define (make-frame variables values)
+    (cons variables values))
+
+  (define (frame-variables frame) (car frame))
+
+  (define (frame-values frame) (cdr frame))
+
+  (define (add-binding-to-frame! var val frame)
+    (set-car! frame (cons var (car frame)))
+    (set-cdr! frame (cons val (cdr frame))))
+
+  (define (extend-environment vars vals base-env)
+    (if (= (length vars) (length vals))
+        (cons (make-frame vars vals) base-env)
+        (if (< (length vars) (length vals))
+            (error "Too many arguments supplied" vars vals)
+            (error "Too few arguments supplied" vars vals))))
+
+  (define (make-scan null-p eq-p var env)
+    (define (scan vars vals)
+      (cond ((null? vars)
+             (null-p))
+            ((eq? var (car vars))
+             (eq-p vars vals))
+            (else (scan (cdr vars) (cdr vals)))))
+    (let ((frame (first-frame env)))
+      (scan (frame-variables frame) (frame-values frame))))
+
+  (define (lookup-variable-value var env)
+    (define (env-loop env)
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable" var)
+          (make-scan
+           (lambda ()
+             (env-loop (enclosing-environment env)))
+           (lambda (vars vals)
+             (car vals)) var env)))
+    (env-loop env))
+
+  (define (set-variable-value! var val env)
+    (define (env-loop env)
+      (if (eq? env the-empty-environment)
+          (error "Unbound variable -- SET!" var)
+          (make-scan
+           (lambda ()
+             (env-loop (enclosing-environment env)))
+           (lambda (vars vals) (set-car! vals val)) var env)))
+    (env-loop env))
+
+  (define (define-variable! var val env)
+    (make-scan (lambda ()
+                 (add-binding-to-frame! var val (first-frame env)))
+               (lambda (vars vals) (set-car! vals val))
+               var env))
+
+  (define (make-unbound! var env)
+    (make-scan (lambda ()
+                 (error "Unbound variable" var))
+               (lambda (vars vals)
+                 (set-car! vals (cadr vals))
+                 (set-cdr! vals (cddr vals))
+
+                 (set-car! vars (cadr vars))
+                 (set-cdr! vars (cddr vars)))
+               var env))
+#+END_SRC
+
+#+RESULTS:
+
+***** Tests
+#+BEGIN_SRC scheme :session make-unbound :exports both :results output code
+  (define env (extend-environment (cons 'a '(b)) (cons '1 '(2)) the-empty-environment))
+
+  (define-variable! 'x 9 env)
+
+  (define-variable! 'y 'T env)
+
+  (display env)
+
+  (newline)
+  (newline)
+
+  (make-unbound! 'x env)
+
+  (display env)
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(((y x a b) T 9 1 2))
+
+(((y a b) T 1 2))
+#+END_SRC
+
+**** This problem is not completely specified. For example, should we remove only the binding in the first frame of the environment? Complete the specification and justify any choices you make.
+
+There are two possible specifications for this:
+1. Remove only the binding in the first frame.
+   This is the safer approach but is not a complete solution, since the unbound will not happen if it's not found in the first frame.
+2. Remove the first found binding in the environment.
+   This will make sure that the operation takes place but can also wreak havoc in the interpreter. For instance, if apply is unbound from the global environment, it will make the interpreter unusable. 
