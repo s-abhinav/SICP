@@ -350,6 +350,10 @@
 	 y
 	 (cons (car x) (append (cdr x) y)))))
 
+(meval append-expr)
+
 (meval '(define x '(1 2 3)))
 
 (meval '(define y '(a b c)))
+
+(meval '(append x y))

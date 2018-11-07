@@ -1,0 +1,7 @@
+#+Title: Exercise 4.14
+
+Eva Lu Ator and Louis Reasoner are each experimenting with the metacircular evaluator. Eva types in the definition of `map', and runs some test programs that use it. They work fine. Louis, in contrast, has installed the system version of `map' as a primitive for the metacircular evaluator. When he tries it, things go terribly wrong.
+
+**** Explain why Louis's `map' fails even though Eva's works.
+
+apply does not know yet how to pass the arguments to the primitive map procedure. map expects a procedure as its first argument and a list as its second argument, whereas the current version of apply passes the whole argument as a list to map.
