@@ -53,7 +53,8 @@
 (define (cond->if exp)
   (expand-clauses (cond-clauses exp)))
 
-(define (application? exp) (pair? exp))
+(define (application? exp)
+  (pair? exp))
 
 (define (operator exp) (car exp))
 
@@ -256,8 +257,24 @@
 	(else
 	 (error "Unknown expression type -- EVAL" exp))))
 
+(define apply-in-underlying-scheme apply)
+
+(define (primitive-procedure? proc)
+  (tagged-list? proc 'primitive))
+
+(define (primitive-implementation proc)
+  (if (procedure? proc)
+      proc
+      (cadr proc)))
+
+(define (apply-primitive-procedure proc args)
+  (if (eq? 1 (procedure-minimum-arity proc))
+      (proc args)
+      (apply-in-underlying-scheme
+       (primitive-implementation proc) args)))
+
 (define (apply procedure arguments)
-  (cond ((primitive-procedure? procedure)
+  (cond ((or (procedure? procedure) (primitive-procedure? procedure))
 	 (apply-primitive-procedure procedure arguments))
 	((compound-procedure? procedure)
 	 (eval-sequence
@@ -270,8 +287,21 @@
 	 (error
 	  "Unknown procedure type -- APPLY" procedure))))
 
-
 ;;; Running the Evaluator
+
+(define primitive-procedures
+  (list (list 'car car)
+	(list 'cdr cdr)
+	(list 'cons cons)
+	(list 'null? null?)))
+
+(define (primitive-procedure-names)
+  (map car
+       primitive-procedures))
+
+(define (primitive-procedure-objects)
+  (map (lambda (proc) (list 'primitive (cadr proc)))
+       primitive-procedures))
 
 (define (setup-environment)
   (let ((initial-env
@@ -283,32 +313,6 @@
     initial-env))
 
 (define the-global-environment (setup-environment))
-
-(define (primitive-procedure? proc)
-  (tagged-list? proc 'primitive))
-
-(define (primitive-implementation proc) (cadr proc))
-
-(define primitive-procedures
-  (list (list 'car car)
-	(list 'cdr cdr)
-	(list 'cons cons)
-	(list 'null? null?)
-	))
-
-(define (primitive-procedure-names)
-  (map car
-       primitive-procedures))
-
-(define (primitive-procedure-objects)
-  (map (lambda (proc) (list 'primitive (cadr proc)))
-       primitive-procedures))
-
-(define apply-in-underlying-scheme apply)
-
-(define (apply-primitive-procedure proc args)
-  (apply-in-underlying-scheme
-   (primitive-implementation proc) args))
 
 (define input-prompt ";;; M-Eval input:")
 (define output-prompt ";;; M-Eval value:")
@@ -336,3 +340,16 @@
       (display object)))
 
 (define the-global-environment (setup-environment))
+
+(define (meval expr)
+  (eval expr the-global-environment))
+
+(define append-expr
+  '(define (append x y)
+     (if (null? x)
+	 y
+	 (cons (car x) (append (cdr x) y)))))
+
+(meval '(define x '(1 2 3)))
+
+(meval '(define y '(a b c)))
