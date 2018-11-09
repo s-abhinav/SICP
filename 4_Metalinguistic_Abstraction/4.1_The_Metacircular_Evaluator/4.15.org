@@ -1,0 +1,21 @@
+Given a one-argument procedure p and an object a, p is said to “halt” on a if evaluating the expression (p a) returns a value (as opposed to terminating with an error message or running forever). 
+**** Show that it is impossible to write a procedure halts? that correctly determines whether p halts on a for any procedure p and object a. 
+halts? needs to wait for (p a)'s outcome so that it can determine if it halts. If (p a) goes into an infinite loop or takes forever to compute a, halts? can never determine if it would halt. halts? then does not serve any purpose.  
+
+
+Use the following reasoning: If you had such a procedure halts?, you could implement the following program:
+
+#+BEGIN_SRC scheme :eval no
+(define (run-forever)
+  (run-forever))
+
+(define (try p)
+  (if (halts? p p)
+      (run-forever)
+      'halted))
+#+END_SRC
+
+**** Now consider evaluating the expression (try try) and show that any possible outcome (either halting or running forever) violates the intended behavior of halts?.
+
+For this case, halt does not know that it's going into an infinite loop. try makes use of halts? and halts? calls try.
+This will never stop.
