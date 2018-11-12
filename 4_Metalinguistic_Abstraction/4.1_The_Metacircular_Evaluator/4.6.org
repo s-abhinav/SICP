@@ -14,7 +14,7 @@ is equivalent to
 Implement a syntactic transformation let->combination that reduces evaluating let expressions to evaluating combinations of the type shown above, and add the appropriate clause to eval to handle let expressions.
 
 **** let->combination
-#+BEGIN_SRC scheme :eval no
+#+BEGIN_SRC scheme :session 4-6
   (define (let? exp)
     (tagged-list? exp 'let))
 
@@ -22,24 +22,41 @@ Implement a syntactic transformation let->combination that reduces evaluating le
     (cadr exp))
 
   (define (let-body exp)
-    (caddr exp))
+    (cddr exp))
 
   (define (let-vars expression-definitions)
     (cond ((null? expression-definitions) '())
-          (cons (caar expression-definitions)
-                (let-vars (cdr expression-definitions)))))
+          (else (cons (caar expression-definitions)
+                 (let-vars (cdr expression-definitions))))))
 
   (define (let-exprs expression-definitions)
     (cond ((null? expression-definitions) '())
-          (cons (cadr expression-definitions)
-                (let-vars (cdr expression-definitions)))))
+          (else (cons (cadar expression-definitions)
+                 (let-exprs (cdr expression-definitions))))))
 
   (define (let->combination exp)
-    (list
-     '(lambda
-          (let-vars (let-expression-definitions exp))
-        (let-body exp))
+    (cons
+     (cons
+      'lambda
+      (cons
+       (let-vars (let-expression-definitions exp))
+       (let-body exp)))
      (let-exprs (let-expression-definitions exp))))
+#+END_SRC
+
+**** Tests
+#+BEGIN_SRC scheme :session 4-6 :exports both :results replace output code
+  (define test-expr
+    '(let ((add (lambda (a b) (+ a b)))
+           (square (lambda (x) (* x x))))
+       (square (add 3 4))))
+
+  (let->combination test-expr)
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+  ((lambda (add square) (square (add 3 4))) (lambda (a b) (+ a b)) (lambda (x) (* x x)))
 #+END_SRC
 
 **** eval modification
