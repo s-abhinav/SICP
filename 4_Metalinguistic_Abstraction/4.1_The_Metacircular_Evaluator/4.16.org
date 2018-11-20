@@ -1,0 +1,56 @@
+#+Title: Exercise 4.16
+In this exercise we implement the method just described for interpreting internal definitions. We assume that the evaluator supports ~let~ (see *Note Exercise 4-6).
+
+#+BEGIN_SRC scheme :session 4-16 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (M-Eval-Module))
+#+END_SRC
+
+
+****  a. Change ~lookup-variable-value~ (section *Note 4-1-3) to signal an error if the value it finds is the symbol ~*unassigned*~.
+See the M-Eval-Module for the change.
+
+#+BEGIN_SRC scheme :session 4-16 :exports both :results replace output raw
+  (eval '(define x '*unassigned*) the-global-environment)
+
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+ERROR: Unassigned variable x
+
+**** b. Write a procedure ~scan-out-defines~ that takes a procedure body and returns an equivalent one that has no internal definitions, by making the transformation described above.
+
+#+BEGIN_SRC scheme :session 4-16 :exports both 
+  (define expr
+    '(lambda (x y z)
+       (define b 5)
+       (define c 10)
+       (+ x y z c b)))
+
+  (scan-out-defines (cddr expr))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+  (((lambda (b c) (set! b 5) (set! c 10) (+ x y z c b)) (quote *unassigned*) (quote *unassigned*)))
+#+END_SRC
+
+**** c. Install ~scan-out-defines~ in the interpreter, either in ~make-procedure~ or in ~procedure-body~ (see section *Note4-1-3). Which place is better? Why?
+
+#+BEGIN_SRC scheme :session 4-16 :exports both 
+  (define expr
+    '((lambda (x y z)
+        (define b 5)
+        (define c 10)
+        (+ x y z c b))
+      1 2 3))
+
+  (eval expr the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+scanning out the defines in make-procedure is the preferred approach since it does the computation once, as opposed to having it in procedure body, where every time it is called, it would have to compute the transformation.
