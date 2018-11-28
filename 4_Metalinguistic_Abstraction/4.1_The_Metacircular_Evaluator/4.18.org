@@ -1,0 +1,31 @@
+#+Title: Exercise 4.18
+Consider an alternative strategy for scanning out definitions that translates the example in the text to
+
+#+BEGIN_SRC scheme :eval no
+  (lambda <VARS>
+    (let ((u '*unassigned*)
+          (v '*unassigned*))
+      (let ((a <E1>)
+            (b <E2>)) ; line 3 will fail here
+        (set! u a)
+        (set! v b))
+      <E3>))
+#+END_SRC
+
+
+Here `a' and `b' are meant to represent new variable names, created
+by the interpreter, that do not appear in the user's program.
+Consider the `solve' procedure from section *Note 3-5-4:::
+
+#+BEGIN_SRC scheme :eval no
+  (define (solve f y0 dt) ; 1
+    (define y (integral (delay dy) y0 dt)) ; 2
+    (define dy (stream-map f y)) ; 3
+    y) ; 4
+#+END_SRC
+
+**** Will this procedure work if internal definitions are scanned out as shown in this exercise?  What if they are scanned out as shown in the text?  Explain.
+
+Line 3 in solve will fail at the b since it will look for y which is not yet present in the scanned out code.
+
+On the other hand, it will work in the version in the text since y would have been defined by the (set! y <e1) already. 
