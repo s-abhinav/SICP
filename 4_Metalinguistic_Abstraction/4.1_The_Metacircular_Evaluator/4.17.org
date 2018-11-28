@@ -1,0 +1,33 @@
+#+Title: Exercise 4.17
+
+**** Draw diagrams of the environment in effect when evaluating the expression ⟨e3⟩ in the procedure in the text, comparing how this will be structured when definitions are interpreted sequentially with how it will be structured if definitions are scanned out as described. 
+
+**** Why is there an extra frame in the transformed program?
+When the let is also transformed into lambda, it gets evaluated as an application, where apply extends the environment with the arguments to evaluate its body.
+
+**** Explain why this difference in environment structure can never make a difference in the behavior of a correct program.
+In both cases, codes inside the let have access to all three variables, vars, u and v.
+
+It does not matter, even in the transformed case, if a variable in the enclosing environment is captured or not, since it would have overwritten its definition in any case.
+
+Taking this into consideration, it can be said that the transformation of scan-out-defines does not alter the behaviour of a program.
+
+**** Design a way to make the interpreter implement the “simultaneous” scope rule for internal definitions without constructing the extra frame.
+One way to achieve this is to transform the outer lambda to include all the defined variables.
+
+This can be transformed from
+#+BEGIN_SRC scheme :eval no
+(lambda ⟨vars⟩
+  (define u ⟨e1⟩)
+  (define v ⟨e2⟩)
+  ⟨e3⟩)
+#+END_SRC
+
+into:
+#+BEGIN_SRC scheme
+  (lambda ⟨vars⟩u v
+          ⟨e3⟩
+          )
+#+END_SRC
+
+While also modifying the list-of-values procedure to fill out missing variables when evaluating an application with *unassigned*
