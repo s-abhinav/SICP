@@ -120,7 +120,8 @@
 (define (quoted? exp)
   (tagged-list? exp 'quote))
 
-(define (variable? exp) (symbol? exp))
+(define (variable? exp)
+  (symbol? exp))
 
 (define (self-evaluating? exp)
   (cond ((number? exp) true)
@@ -158,6 +159,9 @@
     (define (scan vars vals)
       (cond ((null? vars)
 	     (env-loop (enclosing-environment env)))
+	    ((and (eq? var (car vars))
+		  (eq? (car vals) '*unassigned*))
+	     (error "Unassigned variable" var))
 	    ((eq? var (car vars))
 	     (car vals))
 	    (else (scan (cdr vars) (cdr vals)))))
@@ -207,6 +211,7 @@
   'ok)
 
 (define (eval-sequence exps env)
+  (debug "eval-sequence:" exps env)
   (cond ((last-exp? exps) (eval (first-exp exps) env))
 	(else (eval (first-exp exps) env)
 	      (eval-sequence (rest-exps exps) env))))
@@ -223,7 +228,11 @@
 	    (list-of-values (rest-operands exps) env))))
 
 (define (make-procedure parameters body env)
-  (list 'procedure parameters body env))
+  (debug "make-procedure: " body env)
+  (debug "scan-out-defines: " (scan-out-defines body) env)
+  (list 'procedure parameters (scan-out-defines body) env)
+  ; (list 'procedure parameters body env)
+  )
 
 (define (compound-procedure? p)
   (tagged-list? p 'procedure))
@@ -237,27 +246,57 @@
 
 ;;; Evaluator
 
+(define (debug type exp env)
+  (display type) (display exp)
+  (newline)
+  ;; (display "env:") (display env)
+  ;; (newline)
+  )
+
 (define (eval exp env)
-  (cond ((self-evaluating? exp) exp)
-	((variable? exp) (lookup-variable-value exp env))
-	((quoted? exp) (text-of-quotation exp))
-	((assignment? exp) (eval-assignment exp env))
-	((definition? exp) (eval-definition exp env))
-	((if? exp) (eval-if exp env))
+  (debug "eval:" exp env)
+  (cond ((self-evaluating? exp)
+	 exp)
+	((let? exp)
+	 (debug "let?:" exp env)
+	 (eval (let->combination exp) env))
+	((variable? exp)
+	 (debug "variable?:" exp env)
+	 (lookup-variable-value exp env))
+	((quoted? exp)
+	 (debug "quoted?:" exp env)
+	 (text-of-quotation exp))
+	((assignment? exp)
+	 (debug "assignment?:" exp env)
+	 (eval-assignment exp env))
+	((definition? exp)
+	 (debug "definition?:" exp env)
+	 (eval-definition exp env))
+	((if? exp)
+	 (debug "if?:" exp env)
+	 (eval-if exp env))
 	((lambda? exp)
+	 (debug "lambda?:" exp env)
 	 (make-procedure (lambda-parameters exp)
 			 (lambda-body exp)
 			 env))
 	((begin? exp)
+	 (debug "begin?:" exp env)
 	 (eval-sequence (begin-actions exp) env))
-	((cond? exp) (eval (cond->if exp) env))
+	((cond? exp)
+	 (debug "cond?:" exp env)
+	 (eval (cond->if exp) env))
 	((application? exp)
+	 (debug "application?:" exp env)
 	 (apply (eval (operator exp) env)
 		(list-of-values (operands exp) env)))
 	(else
 	 (error "Unknown expression type -- EVAL" exp))))
 
-(define apply-in-underlying-scheme apply)
+
+;;; Do not re evaluate this procedure twice in the
+;;; same session. Doing this twice breaks the interpreter
+;;; (define apply-in-underlying-scheme apply)
 
 (define (primitive-procedure? proc)
   (tagged-list? proc 'primitive))
@@ -277,6 +316,8 @@
   (cond ((or (procedure? procedure) (primitive-procedure? procedure))
 	 (apply-primitive-procedure procedure arguments))
 	((compound-procedure? procedure)
+	 (display "compound-procedure:") (display procedure)
+	 (newline)
 	 (eval-sequence
 	  (procedure-body procedure)
 	  (extend-environment
@@ -293,7 +334,11 @@
   (list (list 'car car)
 	(list 'cdr cdr)
 	(list 'cons cons)
-	(list 'null? null?)))
+	(list 'null? null?)
+	(list '= =)
+	(list '* *)
+	(list '+ +)
+	(list '- -)))
 
 (define (primitive-procedure-names)
   (map car
@@ -314,46 +359,93 @@
 
 (define the-global-environment (setup-environment))
 
-(define input-prompt ";;; M-Eval input:")
-(define output-prompt ";;; M-Eval value:")
+;;; let combinations
 
-(define (driver-loop)
-  (prompt-for-input input-prompt)
-  (let ((input (read)))
-    (let ((output (eval input the-global-environment)))
-      (announce-output output-prompt)
-      (user-print output)))
-  (driver-loop))
+(define (let? exp)
+  (tagged-list? exp 'let))
 
-(define (prompt-for-input string)
-  (newline) (newline) (display string) (newline))
+(define (let-expression-definitions exp)
+  (cadr exp))
 
-(define (announce-output string)
-  (newline) (display string) (newline))
+(define (let-body exp)
+  (cddr exp))
 
-(define (user-print object)
-  (if (compound-procedure? object)
-      (display (list 'compound-procedure
-		     (procedure-parameters object)
-		     (procedure-body object)
-		     '<procedure-env>))
-      (display object)))
+(define (let-vars expression-definitions)
+  (cond ((null? expression-definitions) '())
+	(else (cons (caar expression-definitions)
+	       (let-vars (cdr expression-definitions))))))
 
-(define the-global-environment (setup-environment))
+(define (let-exprs expression-definitions)
+  (cond ((null? expression-definitions) '())
+	(else (cons (cadar expression-definitions)
+	       (let-exprs (cdr expression-definitions))))))
 
-(define (meval expr)
-  (eval expr the-global-environment))
+(define (let->combination exp)
+  (cons
+   (cons
+    'lambda
+    (cons
+     (let-vars (let-expression-definitions exp))
+     (let-body exp)))
+   (let-exprs (let-expression-definitions exp))))
 
-(define append-expr
-  '(define (append x y)
-     (if (null? x)
-	 y
-	 (cons (car x) (append (cdr x) y)))))
 
-(meval append-expr)
+;;; scan out defines
 
-(meval '(define x '(1 2 3)))
+(define (scan-out-defines p-body)
+  (if (not (null? (procedure-variable-body-mapping p-body)))
+      (list
+       (let->combination
+	(append
+	 (list
+	  'let
+	  (procedure-defines-unassigned
+	   (procedure-defines
+	    (procedure-variable-body-mapping p-body))))
+	 (append
+	  (procedure-assignment
+	   (procedure-variable-body-mapping p-body))
+	  (procedure-expressions p-body)))))
+      p-body))
 
-(meval '(define y '(a b c)))
+(define (procedure-expressions p-body)
+  (cond ((null? p-body) '())
+	((definition? (car p-body))
+	 (procedure-expressions (cdr p-body)))
+	(else p-body)))
 
-(meval '(append x y))
+(define (procedure-variable-body-mapping p-body)
+  (cond ((null? p-body) '())
+	((definition? (car p-body))
+	 (cons (list
+		(definition-variable (car p-body))
+		(definition-value (car p-body)))
+	       (procedure-variable-body-mapping (cdr p-body))))
+	(else '())))
+
+(define (procedure-defines mapping)
+  (cond ((null? mapping) '())
+	(else (cons
+	       (caar mapping)
+	       (procedure-defines (cdr mapping))))))
+
+(define (procedure-defines-unassigned defines)
+  (cond ((null? defines) '())
+	(else (cons
+	       (list (car defines) ''*unassigned*)
+	       (procedure-defines-unassigned (cdr defines))))))
+
+(define (procedure-bodies mapping)
+  (cond ((null? mapping) '())
+	(else (cons
+	       (cadar mapping)
+	       (procedure-bodies (cdr mapping))))))
+
+(define (procedure-assignment mapping)
+  (cond ((null? mapping) '())
+	(else
+	 (cons (list
+		'set!
+		(car (procedure-defines mapping))
+		(car (procedure-bodies mapping)))
+	       (procedure-assignment (cdr mapping))))))
