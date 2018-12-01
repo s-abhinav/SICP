@@ -1,0 +1,32 @@
+#+Title: Exercise 4.19
+
+Ben Bitdiddle, Alyssa P. Hacker, and Eva Lu Ator are arguing about the desired result of evaluating the expression
+
+#+BEGIN_SRC scheme :eval no
+  (let ((a 1))
+    (define (f x)
+      (define b (+ a x))
+      (define a 5)
+      (+ a b))
+    (f 10))
+#+END_SRC
+
+Ben asserts that the result should be obtained using the sequential rule for `define': `b' is defined to be 11, then `a' is defined to be 5, so the result is 16. Alyssa objects that mutual recursion requires the simultaneous scope rule for internal procedure definitions, and  that it is unreasonable to treat procedure names differently from other names. Thus, she argues for the mechanism implemented in *Note Exercise 4-16::. This would lead to `a' being unassigned at the time that the value for `b' is to be computed.  Hence, in Alyssa's view the procedure should produce an error. Eva has a third opinion. She says that if the definitions of `a' and `b' are truly meant to be  simultaneous, then the value 5 for `a' should be used in evaluating `b'. Hence, in Eva's view `a' should be 5, `b' should be 15, and the result should be 20. 
+
+**** Which (if any) of these viewpoints do you support?  
+The different mechanisms of handling simultaneous scoping in my opinion should be in the spec of the language. In case of ambiguous simultaneous scoping, I would favor throwing an error instead of producing an erroneous result or introducing confusion in the language.
+**** Can you devise a way to implement internal definitions so that they behave as Eva prefers?
+One way to solve this is to introduce a special delay mechanism in the language.
+While scanning out the defines, they could be transformed into a special delayed evaluation form where its arguments don't evaluated until they are needed:
+
+#+BEGIN_SRC scheme :eval no
+  (let ((b '*unassigned*)
+        (c '*unassigned*))
+    (set! b (delayed-eval (+ a x)))
+    (set! a (delayed-eval 5))
+    (+ a b))
+#+END_SRC  
+
+The delayed-eval special form can then be installed in the evaluator. Whenever it finds an expression being a delayed-eval, it would need to "force" it so that it evaluates the delayed expression.  
+
+In this example, when the evaluator needs to evaluate (+ a b), the arguments to + are delayed-eval, it would need to force the evaluation of a, where the result would be 5, then force the evaluation of b which would be (+ a x) where a is 5, x is 10, hence the value of b being 15. The final result ends up being (+ 5 15) => 20.
