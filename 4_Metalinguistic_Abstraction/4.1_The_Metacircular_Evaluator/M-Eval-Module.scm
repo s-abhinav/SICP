@@ -264,6 +264,9 @@
   (debug "eval:" exp env)
   (cond ((self-evaluating? exp)
 	 exp)
+	((letrec? exp)
+	 (debug "letrec?:" exp env)
+	 (eval (letrec->let exp) env))
 	((let? exp)
 	 (debug "let?:" exp env)
 	 (eval (let->combination exp) env))
@@ -395,6 +398,37 @@
      (let-vars (let-expression-definitions exp))
      (let-body exp)))
    (let-exprs (let-expression-definitions exp))))
+
+
+;;; letrec combinations
+
+(define (letrec? exp)
+  (tagged-list? exp 'letrec))
+
+(define (letrec->let exp)
+  (cons 'let
+	(append (list (letrec-variable-unassigns exp))
+		(letrec-variable-sets exp)
+		(letrec-body exp))))
+
+(define (letrec-variables exp)
+  (map (lambda (mapping) (car mapping)) (cadr exp)))
+
+(define (letrec-expression-definitions exp)
+  (map (lambda (mapping) (cadr mapping)) (cadr exp)))
+
+(define (letrec-variable-unassigns exp)
+  (map (lambda (variable)
+	 (list variable ''*unassignment*))
+       (letrec-variables exp)))
+
+(define (letrec-variable-sets exp)
+  (map (lambda (variable expression)
+	 (list 'set! variable expression))
+       (letrec-variables exp)
+       (letrec-expression-definitions exp)))
+
+(define (letrec-body exp) (cddr exp))
 
 
 ;;; scan out defines
