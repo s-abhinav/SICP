@@ -1,0 +1,69 @@
+#+Title: Exercise 4.21
+
+Factorial test
+#+BEGIN_SRC scheme :session 4-21 :exports both
+  ((lambda (n)
+     ((lambda (fact)
+        (fact fact n))
+      (lambda (ft k)
+        (if (= k 1)
+            1
+            (* k (ft ft (- k 1)))))))
+   10)
+#+END_SRC
+
+#+RESULTS:
+: 3628800
+
+Fibonacci definition
+#+BEGIN_SRC scheme :session 4-21 :exports both
+  (define (fib n)
+    (cond ((= n 0) 1)
+          ((= n 1) 1)
+          (else (+
+                 (fib (- n 1))
+                 (fib (- n 2))))))
+
+(fib 7)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+Fibonacci using lambda only
+#+BEGIN_SRC scheme :session 4-21 :exports both
+((lambda (n)
+   ((lambda (helper)
+      (helper helper n))
+    (lambda (fib k)
+      (cond ((= k 0) 1)
+            ((= k 1) 1)
+            (else (+
+                   (fib fib (- k 1))
+                   (fib fib (- k 2))))))))
+ 7)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+#+BEGIN_SRC scheme :session 4-21 :exports both
+  (define true #t)
+  (define false #f)
+
+  (define (f x)
+    ((lambda (even? odd?)
+       (even? even? odd? x))
+     (lambda (ev? od? n)
+       (if (= n 0) true (od? ev? od? (- n 1))))
+     (lambda (ev? od? n)
+       (if (= n 0) false (ev? ev? od? (- n 1))))))
+
+  (map (lambda (x)
+         (cond ((eq? (f x) #t) 'even)
+               (else 'odd)))
+       '(0 1 2 3 4 5))
+#+END_SRC
+
+#+RESULTS:
+| even | odd | even | odd | even | odd |
