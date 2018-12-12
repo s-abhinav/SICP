@@ -254,10 +254,11 @@
 ;;; Evaluator
 
 (define (debug type exp env)
-  (display type) (display exp)
-  (newline)
+  ;; (display type) (display exp)
+  ;; (newline)
   ;; (display "env:") (display env)
   ;; (newline)
+  '()
   )
 
 (define (eval exp env)
@@ -326,8 +327,6 @@
   (cond ((or (procedure? procedure) (primitive-procedure? procedure))
 	 (apply-primitive-procedure procedure arguments))
 	((compound-procedure? procedure)
-	 (display "compound-procedure:") (display procedure)
-	 (newline)
 	 (eval-sequence
 	  (procedure-body procedure)
 	  (extend-environment

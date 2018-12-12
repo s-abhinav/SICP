@@ -1,3 +1,9 @@
+(define-module (M-Eval-Analyze-Module)
+  :export (
+	   eval
+	   the-global-environment
+	   ))
+
 (define true #t)
 
 (define false #f)

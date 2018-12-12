@@ -1,0 +1,134 @@
+#+Title: Exercise 4.24
+
+Original eval version.
+#+BEGIN_SRC scheme :session 4-24 :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (M-Eval-Module))
+  (use-modules (statprof))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-24 :results replace output raw
+  (define expr '(define (factorial n)
+      (define (loop a b n)
+        (cond ((= n 0) b)
+              ((= n 1) b)
+              (else (loop b (+ b a) (- n 1)))))
+      (loop 0 1 n)))
+
+  (eval expr the-global-environment)
+
+  (statprof (lambda () (eval '(factorial 200000) the-global-environment) #f))
+#+END_SRC
+
+#+RESULTS:
+%     cumulative   self             
+time   seconds     seconds  procedure
+ 42.46      2.37      2.37  %after-gc-thunk
+ 11.17      6.79      0.62  M-Eval-Module.scm:264:0:eval
+  8.10      2.83      0.45  +
+  5.31      0.50      0.30  M-Eval-Module.scm:164:0:lookup-variable-value
+  4.47      9.39      0.25  M-Eval-Module.scm:231:0:list-of-values
+  2.51      0.19      0.14  M-Eval-Module.scm:133:0:self-evaluating?
+  1.96      0.11      0.11  M-Eval-Module.scm:120:0:tagged-list?
+  1.68      0.09      0.09  M-Eval-Module.scm:404:0:letrec?
+  1.40      0.22      0.08  M-Eval-Module.scm:46:0:expand-clauses
+  1.40      0.08      0.08  M-Eval-Module.scm:31:0:begin?
+  1.40      0.08      0.08  M-Eval-Module.scm:149:0:frame-variables
+  1.40      0.08      0.08  M-Eval-Module.scm:256:0:debug
+  1.12      1.02      0.06  M-Eval-Module.scm:226:0:eval-if
+  1.12      0.06      0.06  M-Eval-Module.scm:142:0:first-frame
+  1.12      0.06      0.06  -
+  1.12      0.06      0.06  procedure?
+  0.84      0.16      0.05  M-Eval-Module.scm:326:0:apply
+  0.84      0.05      0.05  number?
+  0.84      0.05      0.05  M-Eval-Module.scm:117:0:assignment?
+  0.84      0.05      0.05  M-Eval-Module.scm:373:0:let?
+  0.84      0.05      0.05  M-Eval-Module.scm:151:0:frame-values
+  0.84      0.05      0.05  M-Eval-Module.scm:74:0:rest-operands
+  0.56      0.06      0.03  M-Eval-Module.scm:315:0:primitive-implementation
+  0.56      0.03      0.03  M-Eval-Module.scm:85:0:if-alternative
+  0.56      0.03      0.03  M-Eval-Module.scm:63:0:application?
+  0.56      0.03      0.03  M-Eval-Module.scm:93:0:lambda?
+  0.56      0.03      0.03  M-Eval-Module.scm:41:0:sequence->exp
+  0.56      0.03      0.03  procedure-minimum-arity
+  0.56      0.03      0.03  M-Eval-Module.scm:130:0:variable?
+  0.28      0.11      0.02  M-Eval-Module.scm:320:0:apply-primitive-procedure
+  0.28      0.02      0.02  M-Eval-Module.scm:81:0:if-predicate
+  0.28      0.02      0.02  M-Eval-Module.scm:247:0:procedure-parameters
+  0.28      0.02      0.02  M-Eval-Module.scm:312:0:primitive-procedure?
+  0.28      0.02      0.02  M-Eval-Module.scm:37:0:first-exp
+  0.28      0.02      0.02  M-Eval-Module.scm:140:0:enclosing-environment
+  0.28      0.02      0.02  M-Eval-Module.scm:20:0:cond-clauses
+  0.28      0.02      0.02  length
+  0.28      0.02      0.02  M-Eval-Module.scm:22:0:cond-predicate
+  0.28      0.02      0.02  M-Eval-Module.scm:70:0:no-operands?
+  0.28      0.02      0.02  M-Eval-Module.scm:251:0:procedure-environment
+  0.28      0.02      0.02  M-Eval-Module.scm:249:0:procedure-body
+  0.00      5.59      0.00  <current input>:140:10
+  0.00      2.37      0.00  anon #x10aa415e0
+  0.00      0.02      0.00  M-Eval-Module.scm:60:0:cond->if
+  0.00      0.02      0.00  M-Eval-Module.scm:220:0:eval-sequence
+  0.00      0.02      0.00  M-Eval-Module.scm:157:0:extend-environment
+---
+Sample count: 358
+Total time: 5.591012 seconds (2.166243 seconds in GC)
+
+Optimized eval version.
+#+BEGIN_SRC scheme :session 4-24-a :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (use-modules (M-Eval-Analyze-Module))
+  (use-modules (statprof))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-24-a :results output raw
+  (define expr '(define (factorial n)
+      (define (loop a b n)
+        (cond ((= n 0) b)
+              ((= n 1) b)
+              (else (loop b (+ b a) (- n 1)))))
+      (loop 0 1 n)))
+
+  (eval expr the-global-environment)
+
+  (statprof (lambda () (eval '(factorial 200000) the-global-environment) #f))
+#+END_SRC
+
+#+RESULTS:
+%     cumulative   self             
+time   seconds     seconds  procedure
+ 66.36      2.66      2.66  %after-gc-thunk
+  6.54      2.93      0.26  +
+  6.54      0.49      0.26  M-Eval-Analyze-Module.scm:163:0:lookup-variable-value
+  2.80      7.71      0.11  ice-9/boot-9.scm:220:5:map1
+  1.87      4.28      0.08  M-Eval-Analyze-Module.scm:338:4
+  1.87      0.08      0.08  M-Eval-Analyze-Module.scm:141:0:first-frame
+  1.87      0.08      0.08  M-Eval-Analyze-Module.scm:291:2
+  1.40      0.06      0.06  M-Eval-Analyze-Module.scm:148:0:frame-variables
+  1.40      0.06      0.06  M-Eval-Analyze-Module.scm:150:0:frame-values
+  0.93      0.13      0.04  M-Eval-Analyze-Module.scm:343:0:execute-application
+  0.93      0.04      0.04  M-Eval-Analyze-Module.scm:360:0:primitive-procedure?
+  0.93      0.04      0.04  =
+  0.93      0.04      0.04  procedure-minimum-arity
+  0.93      0.04      0.04  M-Eval-Analyze-Module.scm:139:0:enclosing-environment
+  0.47      0.04      0.02  M-Eval-Analyze-Module.scm:363:0:primitive-implementation
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:284:2
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:11:0:true?
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:340:32
+  0.47      0.02      0.02  ice-9/boot-9.scm:215:2:map
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:156:0:extend-environment
+  0.47      0.02      0.02  ice-9/boot-9.scm:62:2:apply
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:243:0:compound-procedure?
+  0.47      0.02      0.02  procedure?
+  0.47      0.02      0.02  M-Eval-Analyze-Module.scm:119:0:tagged-list?
+  0.00      4.02      0.00  <current input>:19:10
+  0.00      2.66      0.00  anon #x109f1f5e0
+  0.00      0.39      0.00  M-Eval-Analyze-Module.scm:311:4
+  0.00      0.08      0.00  M-Eval-Analyze-Module.scm:368:0:apply-primitive-procedure
+---
+Sample count: 214
+Total time: 4.015926 seconds (2.192974 seconds in GC)
+
+
+Since the analysis time is very small, statprof did not list it. It looks like the analyze version was able to shave off 1.6 seconds for the same computation.
