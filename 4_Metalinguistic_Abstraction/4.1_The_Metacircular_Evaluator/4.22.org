@@ -1,0 +1,10 @@
+#+Title: Exercise 4.22
+ Extend the evaluator in this section to support the special form let. (See Exercise 4.6.)
+
+Add this code to the analyze procedure.
+See the M-Eval-Analyze-Module file.
+
+#+BEGIN_SRC scheme :eval no
+  ((let? exp)
+   (analyze (let->combination exp)))
+#+END_SRC
