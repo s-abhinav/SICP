@@ -1,0 +1,14 @@
+#+Title: Exercise 4.25
+Suppose that (in ordinary applicative-order Scheme) we define `unless' as shown above and then define`factorial' in terms of `unless' as
+#+BEGIN_SRC scheme :eval no
+  (define (factorial n)
+    (unless (= n 1)
+      (* n (factorial (- n 1)))
+      1))
+#+END_SRC
+
+**** What happens if we attempt to evaluate `(factorial 5)'?
+Since unless evaluates its arguments, the call to (factorial 5) will never end.
+
+**** Will our definitions work in a normal-order language?
+Yes, since unless will not evaluate the usual value until it's needed.
