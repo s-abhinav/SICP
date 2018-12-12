@@ -1,0 +1,15 @@
+#+Title: Exercise 4.23
+
+
+Compare the two versions of `analyze-sequence'.  For example,
+consider the common case (typical of procedure bodies) where the
+sequence has just one expression.  
+
+**** What work will the execution procedure produced by Alyssa's program do? 
+It will produce a lambda which when evaluated, the first expression in the sequence will get evaluated then the rest of the expressions will get "analyzed".
+
+**** What about the execution procedure produced by the program in the text above? 
+It will construct a lambda for each of the expression in the procedure and return the last expression in a lambda.
+
+**** How do the two versions compare for a sequence with two expressions?
+There won't be much difference in computation time for two expressions in both versions, however, the execution procedure from the text will be much faster in large sequences.
