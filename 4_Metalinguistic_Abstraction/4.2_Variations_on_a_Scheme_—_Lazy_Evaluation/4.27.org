@@ -1,0 +1,38 @@
+#+Title: Exercise 4.27
+
+Suppose we type in the following definitions to the lazy evaluator:
+
+#+BEGIN_SRC scheme :eval no
+  (define count 0)
+
+  (define (id x)
+    (set! count (+ count 1))
+    x)
+#+END_SRC
+
+**** Give the missing values in the following sequence of interactions, and explain your answers.
+
+#+BEGIN_SRC scheme :eval no
+(define w (id (id 10)))
+#+END_SRC
+
+;;; L-Eval input:
+count
+;;; L-Eval value:
+1
+
+When w is defined, the lazy eval has evaluated the operator which is id once and delayed the argument (id 10), hence causing count to be incremented by 1.
+
+;;; L-Eval input:
+w
+;;; L-Eval value:
+(thunk (id 10) (((w id count false true car cdr cons null? = * + -) #-5# (procedure (x) ((set! count (+ count 1)) x) #-7#) 1 #f #t (primitive #<procedure car (_)>) (primitive #<procedure cdr (_)>) (primitive #<procedure cons (_ _)>) (primitive #<procedure null? (_)>) (primitive #<procedure = (#:optional _ _ . _)>) (primitive #<procedure * (#:optional _ _ . _)>) (primitive #<procedure + (#:optional _ _ . _)>) (primitive #<procedure - (#:optional _ _ . _)>))))
+
+evaluating w is looking up w, which is a thunk produced by the evaluator.
+
+;;; L-Eval input:
+count
+;;; L-Eval value:
+1
+
+At this point, evaluating w has not evaluated its body, but merely showing what it is. Hence, count stays the same.
