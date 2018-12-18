@@ -1,0 +1,18 @@
+#+Title: Exercise 4.28
+~Eval~ uses ~actual-value~ rather than ~eval~ to evaluate the operator before passing it to ~apply~, in order to force the value of the operator. 
+
+**** Give an example that demonstrates the need for this forcing.
+
+#+BEGIN_SRC scheme :eval no
+  (define y 10)
+
+  (define x (lambda (a) (+ a y)))
+
+  (x 1)
+#+END_SRC
+
+The evaluator is now operating in such a way as to either
+  1. evaluate the argument when the operator is a primitive
+  2. or evaluate the operator and delay the arguments.
+
+If the evaluator does not force the operator, it will instead return a thunk and stop there. Nothing will ever get evaluated in this way.
