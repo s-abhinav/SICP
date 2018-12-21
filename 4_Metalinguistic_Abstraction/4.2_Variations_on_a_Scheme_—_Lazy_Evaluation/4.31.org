@@ -1,0 +1,74 @@
+#+Title: Exercise 4.31
+
+#+BEGIN_SRC scheme :session 4-31 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./M-Eval-Lazy-Compatible-Extension.scm")
+#+END_SRC
+
+
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define x 0) the-global-environment)
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 0
+
+Use an increment function to test if an argument
+is lazy.
+If the argument is lazy, inc-x should not increment the value of x. Otherwise, it should increment the value of x.
+#+BEGIN_SRC scheme :session 4-31 :results output silent
+  (eval '(define (inc-x n)
+           (set! x (+ x n))
+           x)
+        the-global-environment)
+#+END_SRC
+
+Define a function taking a non-lazy argument. It should evaluate its argument even though the function it returns is not evaluated.
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define (f a)
+           (lambda () (+ 0 a))) the-global-environment)
+
+  (eval '(f (inc-x 1)) the-global-environment)
+
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 1
+
+Define function g having a lazy parameter. In this case,
+x should not be incremented since the argument is lazy.
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define (g (a lazy))
+           (lambda () (+ 0 a))) the-global-environment)
+
+  (eval '(g (inc-x 1)) the-global-environment)
+
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 1
+
+Eval f again to test
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(f (inc-x 1)) the-global-environment)
+
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 2
+
+
+Eval g, but now force the evaluation of the returning procedure
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '((g (inc-x 1))) the-global-environment)
+
+  (eval 'x the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: 3
