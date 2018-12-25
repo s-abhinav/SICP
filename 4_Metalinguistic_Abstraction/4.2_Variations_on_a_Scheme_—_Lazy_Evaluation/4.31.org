@@ -1,11 +1,16 @@
 #+Title: Exercise 4.31
 
 #+BEGIN_SRC scheme :session 4-31 :exports none :results output silent
+  (use-modules (statprof))
+
   (add-to-load-path (dirname "./"))
 
   (load "./M-Eval-Lazy-Compatible-Extension.scm")
 #+END_SRC
 
+See M-Eval-Lazy-Compatible-Extension.scm for the implementation.
+
+* Lazy
 
 #+BEGIN_SRC scheme :session 4-31 :exports both
   (eval '(define x 0) the-global-environment)
@@ -72,3 +77,67 @@ Eval g, but now force the evaluation of the returning procedure
 
 #+RESULTS:
 : 3
+
+
+* Lazy Memo
+
+To test Lazy Memo, we would need an expression passed in as an argument to be evaluated repeatedly a few times.
+
+Non memoized arguments should take longer to evaluate compared to memoized arguments.
+
+** Non memoized test
+*** Define the Fibonacci procedure
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define (fib n)
+           (cond ((= n 0) 1)
+                 ((= n 1) 1)
+                 (else (+
+                        (fib (- n 1))
+                        (fib (- n 2))))))
+        the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+Define a procedure to add fib of n 6 times with a lazy parameter
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define (f (g lazy)) (+ 0 g g g g g g)) the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+ Time the execution
+
+#+BEGIN_SRC scheme :session 4-31 :results replace output raw :exports both
+  (statprof
+   (lambda ()
+     (eval '(f (fib 22)) the-global-environment)))
+#+END_SRC
+
+#+RESULTS:
+: Total time: 4.566791 seconds (0.243686 seconds in GC)
+
+** Memoized Test
+Define a procedure to add fib of n 6 times with a lazy memo parameter
+#+BEGIN_SRC scheme :session 4-31 :exports both
+  (eval '(define (f-m (g lazy-memo)) (+ 0 g g g g g g)) the-global-environment)
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+Time the execution
+#+BEGIN_SRC scheme :session 4-31 :results replace output raw :exports both
+  (statprof
+   (lambda ()
+     (eval '(f-m (fib 22)) the-global-environment)))
+#+END_SRC
+
+#+RESULTS:
+: Total time: 0.753589 seconds (0.042601 seconds in GC)
+
+
+** Results analysis
+It can be seen that the non memoized version takes roughly 6 times longer to complete the execution, which shows that the new syntax is working.
