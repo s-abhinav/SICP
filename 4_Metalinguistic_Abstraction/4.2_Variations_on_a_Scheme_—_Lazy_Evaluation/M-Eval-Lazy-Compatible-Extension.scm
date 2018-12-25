@@ -258,8 +258,8 @@
 ;;; Evaluator
 
 (define (debug type exp env)
-  (display type) (display exp)
-  (newline)
+  ;; (display type) (display exp)
+  ;; (newline)
   ;; (display "env:") (display env)
   ;; (newline)
   '()
@@ -298,11 +298,9 @@
 	 (error "Unknown expression type -- EVAL" exp))))
 
 (define (actual-value exp env)
-  (debug "actual-evalue" exp env)
   (force-it (eval exp env)))
 
 (define (delay-it exp env)
-  (debug "delay-it" exp env)
   (list 'thunk exp env))
 
 (define (thunk? obj)
@@ -319,13 +317,16 @@
 
 (define (force-it obj)
   (cond ((thunk? obj)
-         (let ((result (actual-value
-                        (thunk-exp obj)
-                        (thunk-env obj))))
-           (set-car! obj 'evaluated-thunk)
-           (set-car! (cdr obj) result)  ; replace `exp' with its value
-           (set-cdr! (cdr obj) '())     ; forget unneeded `env'
-           result))
+         (if (lazy-memo-parameter? (thunk-exp obj))
+	  (let ((result (actual-value
+                         (cadr (thunk-exp obj))
+                         (thunk-env obj))))
+            (set-car! obj 'evaluated-thunk)
+            (set-car! (cdr obj) result)	; replace `exp' with its value
+            (set-cdr! (cdr obj) '())	; forget unneeded `env'
+            result)
+	  (actual-value (thunk-exp obj)
+                    (thunk-env obj))))
         ((evaluated-thunk? obj)
          (thunk-value obj))
         (else obj)))
@@ -351,12 +352,10 @@
 
 (define (apply procedure arguments env)
   (cond ((primitive-procedure? procedure)
-	 (debug "apply-primitive" arguments env)
          (apply-primitive-procedure
           procedure
           (list-of-arg-values arguments env)))  ; changed
         ((compound-procedure? procedure)
-	 (debug "apply-compound" arguments env)
          (eval-sequence
           (procedure-body procedure)
           (extend-environment
@@ -395,15 +394,15 @@
                                   env))))
 
 (define (list-of-args exps parameters env)
-  (debug "list-of-args:exps" exps env)
-  (debug "list-of-args:parameters" parameters env)
   (if (no-operands? exps)
       '()
       (cons
        (if (and (pair? (car parameters))
 		(or (lazy-parameter? (car parameters))
 		    (lazy-memo-parameter? (car parameters))))
-	   (delay-it (first-operand exps) env)
+	   (if (lazy-memo-parameter? (car parameters))
+	       (delay-it (list 'lazy-memo (first-operand exps)) env)
+	       (delay-it (first-operand exps) env))
 	   (actual-value (first-operand exps) env))
        (list-of-args (rest-operands exps) (cdr parameters) env))))
 ;;; Running the Evaluator
