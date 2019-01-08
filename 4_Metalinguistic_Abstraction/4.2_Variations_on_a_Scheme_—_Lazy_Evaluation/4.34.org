@@ -1,0 +1,15 @@
+#+Title: Exercise 4.34
+
+Modify the driver loop for the evaluator so that lazy pairs and lists will print in some reasonable way. (What are you going to do about infinite lists?) You may also need to modify the representation of lazy pairs so that the evaluator can identify them in order to print them.
+
+In eval's quoted?, make-procedure could be modified to tag the pair.
+
+For instance, while building the body of the procedure, 
+the line (car (text-of-quotation exp)) could be tagged as 
+
+(list 'lazy-pair (car (text-of-quotation exp)))
+
+When the print procedure encounters lazy-pair, it could force the thunk out.
+
+For the infinite list, the print procedure could keep an internal counter while printing the list. When reaches a threshold, it would stop and indicate that the list continues.
+
