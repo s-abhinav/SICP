@@ -1,0 +1,18 @@
+#+Title: Exercise 4.32
+The difference is in the way the stream operations are implemented.
+
+In Chapter 3, stream operations contain explicit delay operations,
+making it harder to implement new kinds of lazy procedures. In this
+section though, there is no need to add delay operations to create
+new lazy procedures. The programmer does not have to worry about
+the lazy implementation of a new procedure at all, but only to write
+the solution.
+
+The lazy evaluator makes the language so much cleaner and elegant,
+providing more power to the programmer. This opens up a whole new
+world of possibilities.
+
+The extra laziness that the evaluator provides is that all arguments
+become lazy as opposed to Chapter 3 where only the second argument
+of cons was lazy. This gives more flexibility in designing new types
+of data structures where the first argument is also lazy.
