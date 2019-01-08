@@ -247,10 +247,10 @@
 ;;; Evaluator
 
 (define (debug type exp env)
-  (display type) (display exp)
-  (newline)
-  (display "env:") (display env)
-  (newline)
+  ;; (display type) (display exp)
+  ;; (newline)
+  ;; (display "env:") (display env)
+  ;; (newline)
   '()
   )
 
@@ -269,7 +269,14 @@
 	 (lookup-variable-value exp env))
 	((quoted? exp)
 	 (debug "quoted?:" exp env)
-	 (text-of-quotation exp))
+	 (make-procedure
+	  (list 'm)
+	  (list
+	   (list
+	    'm
+	    (car (text-of-quotation exp))
+	    (list 'quote (cdr (text-of-quotation exp))))) env)
+	 )
 	((assignment? exp)
 	 (debug "assignment?:" exp env)
 	 (eval-assignment exp env))
@@ -382,10 +389,7 @@
 ;;; Running the Evaluator
 
 (define primitive-procedures
-  (list (list 'car car)
-	(list 'cdr cdr)
-	(list 'cons cons)
-	(list 'null? null?)
+  (list (list 'null? null?)
 	(list '= =)
 	(list '* *)
 	(list '+ +)
@@ -531,3 +535,18 @@
 		(car (procedure-defines mapping))
 		(car (procedure-bodies mapping)))
 	       (procedure-assignment (cdr mapping))))))
+
+(eval '(define (cons x y)
+	 (lambda (m)
+	   (m x y)))
+      the-global-environment)
+
+(eval '(define (car z)
+	 (z (lambda (p q)
+	      p)))
+      the-global-environment)
+
+(eval '(define (cdr z)
+	 (z (lambda (p q)
+	      q)))
+      the-global-environment)
