@@ -1,0 +1,105 @@
+#+Title: Exercise 4.36
+Note Exercise 3-69:: discussed how to generate the stream of _all_ Pythagorean triples, with no upper bound on the size of the integers to be searched. 
+
+**** Explain why simply replacing `an-integer-between' by `an-integer-starting-from' in the procedure in *Note Exercise 4-35:: is not an adequate way to generate arbitrary Pythagorean triples. 
+
+As we can see from the implementation of the ~a-pythagorean-triple-between~, it is relying on the failure of one of i, j or k to restrict the search space.
+
+If we take a look at how ~an-integer-between~ was implemented
+#+BEGIN_SRC scheme :eval no
+    (define (an-integer-between low high)
+      (an-element-of (range (+ 1 low) high)))
+#+END_SRC
+it makes use of the ~an-element-of~ procedure, which needs a finite list. Simply replacing ~an-integer-between~ by ~an-integer-starting-from~ makes ~a-pythagorean-triple-between~ stuck on the search for
+when i = m, j = i + 1, and k = j + 1 to infinite, which never ends since there might not be any solution for a problem starting with ~from~ being 1.
+i = 1, j = 2, k = 3 will be the first verification of the requirement, which obviously fails. ambeval will then try with k = 4, then k = 5 and keeps on going to inifinity.
+
+**** Write a procedure that actually will accomplish this. (That is, write a procedure for which repeatedly typing `try-again' would in principle eventually generate all Pythagorean triples.)
+
+#+BEGIN_SRC scheme :session 4-36 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+
+One way to solve this problem is by restricting the search space and preventing amb to go down a path and never return back.
+By multiplying j by 2 times i and k by 2 times j, it's a good enough approximation that can find some solutions, albeit not optimum since the best range for k is being within the square root of the sum of squares of i and j.
+#+BEGIN_SRC scheme :session 4-36 :exports both
+  (ambeval-helper
+   '(begin
+
+      (define (an-integer-starting-from n)
+        (amb n (an-integer-starting-from (+ n 1))))
+
+      (define (range low high)
+        (cond ((= low high) '())
+              (else (cons low (range (+ 1 low) high)))))
+
+      (define (an-integer-between low high)
+        (an-element-of (range (+ 1 low) high)))
+
+      (define (pythagorean-triples)
+        (let ((i (an-integer-starting-from 1)))
+          (let ((j (an-integer-between 1 (* 2 i))))
+            (let ((k (an-integer-between 1 (* 2 j))))
+              (require (= (+ (* i i) (* j j)) 
+                          (* k k)))
+              (list i j k)))))))
+
+
+  (ambeval-helper '(pythagorean-triples))
+
+#+END_SRC
+
+#+RESULTS:
+| 3 | 4 | 5 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 4 | 3 | 5 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 6 | 8 | 10 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 8 | 6 | 10 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 8 | 15 | 17 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 9 | 12 | 15 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 12 | 9 | 15 |
+
+#+BEGIN_SRC scheme :session 4-36 :exports both
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 12 | 16 | 20 |
