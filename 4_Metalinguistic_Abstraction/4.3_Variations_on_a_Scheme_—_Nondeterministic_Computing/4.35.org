@@ -1,0 +1,75 @@
+#+Title: Exercise 4.35
+
+Write a procedure `an-integer-between' that returns an integer between two given bounds.  This can be used to implement a procedure that finds Pythagorean triples, i.e., triples of integers (i,j,k) between the given bounds such that i <= j and i^2 + j^2 = k^2, as follows:
+
+#+BEGIN_SRC scheme :session 4-35 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+#+BEGIN_SRC scheme :eval no 
+  (define (a-pythagorean-triple-between low high)
+    (let ((i (an-integer-between low high)))
+      (let ((j (an-integer-between i high)))
+        (let ((k (an-integer-between j high)))
+          (require (= (+ (* i i) (* j j)) (* k k)))
+          (list i j k)))))
+#+END_SRC
+
+Leverage an-element-of to define an-integer-between
+#+BEGIN_SRC scheme :session 4-35 :exports both  
+  (ambeval-helper
+   '(begin
+
+      (define (range low high)
+        (cond ((= low high) '())
+              (else (cons low (range (+ 1 low) high)))))
+
+      (define (an-integer-between low high)
+        (an-element-of (range (+ 1 low) high)))
+
+      (define (a-pythagorean-triple-between low high)
+        (let ((i (an-integer-between low high)))
+          (let ((j (an-integer-between i high)))
+            (let ((k (an-integer-between j high)))
+              (require (= (+ (* i i) (* j j)) (* k k)))
+              (list i j k)))))
+      ))
+
+  (ambeval-helper '(a-pythagorean-triple-between 0 100))
+
+#+END_SRC
+
+#+RESULTS:
+| 3 | 4 | 5 |
+
+* Tests
+
+#+BEGIN_SRC scheme :session 4-35 :exports both  
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 5 | 12 | 13 |
+
+#+BEGIN_SRC scheme :session 4-35 :exports both  
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 6 | 8 | 10 |
+
+#+BEGIN_SRC scheme :session 4-35 :exports both  
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 7 | 24 | 25 |
+
+#+BEGIN_SRC scheme :session 4-35 :exports both  
+(try-again)
+#+END_SRC
+
+#+RESULTS:
+| 8 | 15 | 17 |
