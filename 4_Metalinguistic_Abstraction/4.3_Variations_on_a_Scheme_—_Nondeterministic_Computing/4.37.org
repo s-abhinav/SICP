@@ -1,0 +1,31 @@
+#+Title: Exercise 4.37
+
+Ben Bitdiddle claims that the following method for generating Pythagorean triples is more efficient than the one in *Note Exercise 4-35::. Is he correct? (Hint: Consider the number of possibilities that must be explored.)
+
+#+BEGIN_SRC scheme :eval no
+  (define (a-pythagorean-triple-between low high)
+    (let ((i (an-integer-between low high))
+          (hsq (* high high)))
+      (let ((j (an-integer-between i high)))
+        (let ((ksq (+ (* i i) (* j j))))
+          (require (>= hsq ksq))
+          (let ((k (sqrt ksq)))
+            (require (integer? k))
+            (list i j k))))))
+#+END_SRC
+
+Let's do an order of growth calculation for both algorithms.
+
+Exercise 4.35
+1. Let n be the value between low and high.
+2. We are roughly looking at theta n^3 (0)n^3
+
+Exercise 4.37
+1. i will take (0)n
+2. j will take (0)n
+3. ksq will take (0)n assuming that the iterations are not high^2 - low since it's summing the square of i and j
+4. sqrt is (0)n, assuming that it has to check every value from 1 to ksq, not taking into consideration optimizations in the sqrt procedure.
+
+In total, we are roughly looking at an order of growth between (0)n^3 and (0)n^4.
+
+I would argue that 4.37 has an order of growth similar or worse than 4.35. 
