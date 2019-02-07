@@ -471,7 +471,9 @@
 	(list '+ +)
 	(list '- -)
 	(list 'not not)
-	(list 'remainder remainder)))
+	(list 'remainder remainder)
+	(list 'abs abs)
+	(list 'member member)))
 
 (define (primitive-procedure-names)
   (map car

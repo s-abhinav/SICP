@@ -1,0 +1,155 @@
+#+Title: Exercise 4.38
+* Multiple Dwelling Test
+
+** Load the amb evaluator
+#+BEGIN_SRC scheme :session 4-38 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+** multiple-dwelling
+To be able to run this procedure, abs and member procedures had to be
+installed as primitive procedures in the amb evaluator.
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper
+   '(define (multiple-dwelling)
+      (let ((baker (amb 1 2 3 4 5))
+            (cooper (amb 1 2 3 4 5))
+            (fletcher (amb 1 2 3 4 5))
+            (miller (amb 1 2 3 4 5))
+            (smith (amb 1 2 3 4 5)))
+        (require
+         (distinct? (list baker cooper fletcher miller smith)))
+        (require (not (= baker 5)))
+        (require (not (= cooper 1)))
+        (require (not (= fletcher 5)))
+        (require (not (= fletcher 1)))
+        (require (> miller cooper))
+        (require (not (= (abs (- smith fletcher)) 1)))
+        (require (not (= (abs (- fletcher cooper)) 1)))
+        (list (list 'baker baker)
+              (list 'cooper cooper)
+              (list 'fletcher fletcher)
+              (list 'miller miller)
+              (list 'smith smith)))))
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+** distinct? implementation from the book.
+Requires member to be installed as primitive in the evaluator.
+
+**** Implementation
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper
+   '(define (distinct? items)
+      (cond ((null? items) true)
+            ((null? (cdr items)) true)
+            ((member (car items) (cdr items)) false)
+            (else (distinct? (cdr items)))))
+   )
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+** distinct? Tests
+**** fail case
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper '(distinct? '(1 2 3 4 4)))
+#+END_SRC
+
+#+RESULTS:
+: #f
+
+**** Pass test case
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper '(distinct? '(1 2 3 4 5)))
+#+END_SRC
+
+#+RESULTS:
+: #t
+
+
+** multiple-dwelling test
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper '(multiple-dwelling))
+#+END_SRC
+
+#+RESULTS:
+| baker    | 3 |
+| cooper   | 2 |
+| fletcher | 4 |
+| miller   | 5 |
+| smith    | 1 |
+
+
+This is the same result as the book, validating the implementation for future use.
+
+Even though the book says that it is very slow, it completed instantly on a 2017 12" MacBook base model.
+
+Some thoughts on this:
+I'm not sure when this was run, although it's known that amb was implemented by John McCarthy in the early days of Lisp, which leads me to believe that the version in the book could have been run in the 1980s, when the first version of the book was released. At that time, was it being run on the time sharing computers? Were computers back then really that slow?
+
+* Actual Exercise
+Modify the multiple-dwelling procedure to omit the requirement that Smith and Fletcher do not live on adjacent floors. How many solutions are there to this modified puzzle?
+
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (ambeval-helper
+   '(define (multiple-dwelling)
+      (let ((baker (amb 1 2 3 4 5))
+            (cooper (amb 1 2 3 4 5))
+            (fletcher (amb 1 2 3 4 5))
+            (miller (amb 1 2 3 4 5))
+            (smith (amb 1 2 3 4 5)))
+        (require
+         (distinct? (list baker cooper fletcher miller smith)))
+        (require (not (= baker 5)))
+        (require (not (= cooper 1)))
+        (require (not (= fletcher 5)))
+        (require (not (= fletcher 1)))
+        (require (> miller cooper))
+        ; (require (not (= (abs (- smith fletcher)) 1)))
+        (require (not (= (abs (- fletcher cooper)) 1)))
+        (list (list 'baker baker)
+              (list 'cooper cooper)
+              (list 'fletcher fletcher)
+              (list 'miller miller)
+              (list 'smith smith)))))
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+** loop and find out the number of solutions
+
+Compute the number of solutions
+#+BEGIN_SRC scheme :session 4-38 :exports both
+  (define solution-counter 0)
+
+  (ambeval-helper '(multiple-dwelling))
+
+  (set! solution-counter (+ 1 solution-counter))
+
+  (define (try-again-loop)
+    (try-again)
+    (set! solution-counter (+ 1 solution-counter))
+    (try-again-loop))
+
+  (try-again-loop)
+
+#+END_SRC
+
+#+RESULTS:
+
+Display the results
+#+BEGIN_SRC scheme :session 4-38 :exports both
+solution-counter
+#+END_SRC
+
+#+RESULTS:
+: 5
+
+
