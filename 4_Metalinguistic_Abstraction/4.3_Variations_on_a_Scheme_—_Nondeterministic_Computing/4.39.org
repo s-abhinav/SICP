@@ -1,0 +1,108 @@
+#+Title: Exercise 4.39
+**** Does the order of the restrictions in the multiple-dwelling procedure affect the answer?
+It should not affect the answer since it's the same set of requirements
+
+**** Does it affect the time to find an answer?
+Most probably yes. 
+
+**** If you think it matters, demonstrate a faster program obtained from the given one by reordering the restrictions.
+
+***** Load the amb evaluator
+#+BEGIN_SRC scheme :session 4-39 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+***** The book version 
+#+BEGIN_SRC scheme :session 4-39 :exports both
+  (ambeval-helper
+   '(define (distinct? items)
+      (cond ((null? items) true)
+            ((null? (cdr items)) true)
+            ((member (car items) (cdr items)) false)
+            (else (distinct? (cdr items)))))
+   )
+
+  (ambeval-helper
+   '(define (multiple-dwelling)
+      (let ((baker (amb 1 2 3 4 5))
+            (cooper (amb 1 2 3 4 5))
+            (fletcher (amb 1 2 3 4 5))
+            (miller (amb 1 2 3 4 5))
+            (smith (amb 1 2 3 4 5)))
+        (require
+         (distinct? (list baker cooper fletcher miller smith)))
+        (require (not (= baker 5)))
+        (require (not (= cooper 1)))
+        (require (not (= fletcher 5)))
+        (require (not (= fletcher 1)))
+        (require (> miller cooper))
+        (require (not (= (abs (- smith fletcher)) 1)))
+        (require (not (= (abs (- fletcher cooper)) 1)))
+        (list (list 'baker baker)
+              (list 'cooper cooper)
+              (list 'fletcher fletcher)
+              (list 'miller miller)
+              (list 'smith smith)))))
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+***** multiple-dwelling number of amb calls
+#+BEGIN_SRC scheme :session 4-39 :exports both
+  (ambeval-helper '(multiple-dwelling))
+  amb-counter
+#+END_SRC
+
+#+RESULTS:
+: 3675
+
+***** Reorder requires
+;; move the most restrictive condition to the top so that
+;; it decreases the subsequent search space.
+#+BEGIN_SRC scheme :session 4-39 :exports both
+  (set! amb-counter 0)
+
+  (ambeval-helper
+   '(define (multiple-dwelling)
+      (let ((baker (amb 1 2 3 4 5))
+            (cooper (amb 1 2 3 4 5))
+            (fletcher (amb 1 2 3 4 5))
+            (miller (amb 1 2 3 4 5))
+            (smith (amb 1 2 3 4 5)))
+
+        (require (not (= (abs (- smith fletcher)) 1)))
+        (require (not (= (abs (- fletcher cooper)) 1)))
+
+        (require (not (= baker 5)))
+        (require (not (= cooper 1)))
+        (require (not (= fletcher 5)))
+        (require (not (= fletcher 1)))
+        (require (> miller cooper))
+        (require
+         (distinct? (list baker cooper fletcher miller smith)))
+        (list (list 'baker baker)
+              (list 'cooper cooper)
+              (list 'fletcher fletcher)
+              (list 'miller miller)
+              (list 'smith smith)))))
+
+  (ambeval-helper '(multiple-dwelling))
+
+  amb-counter
+#+END_SRC
+
+#+RESULTS:
+: 3675
+
+**** If you think it does not matter, argue your case.
+After running some experiments with reordering the requires, it does not seem that
+it is changing the time it takes to solve the problem. amb-counter is a good enough
+indication of the order of growth. Its value stayed the same for both version.
+It can be deduced that all the requires work as a single require with ANDs.
+In an AND condition, reordering the predicates would not affect the result.
+
+I would have preferred measuring the runtime of both procedures, but since they are running so fast,
+the time results wouldn't be precise enough for comparison. 

@@ -411,10 +411,13 @@
           "Unknown procedure type -- EXECUTE-APPLICATION"
           proc))))
 
+(define amb-counter 0)
+
 (define (analyze-amb exp)
   (let ((cprocs (map analyze (amb-choices exp))))
     (lambda (env succeed fail)
       (define (try-next choices)
+	(set! amb-counter (+ 1 amb-counter))
         (if (null? choices)
             (fail)
             ((car choices) env
