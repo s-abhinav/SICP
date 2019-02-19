@@ -1,0 +1,67 @@
+#+Title: Exercise 4.41
+Write an ordinary Scheme program to solve the multiple dwelling puzzle.
+
+#+BEGIN_SRC scheme :session 4-41
+  (define (remove e list)
+    (cond ((null? list) '())
+          ((eq? (car list) e) (remove e (cdr list)))
+          (else (cons (car list) (remove e (cdr list))))))
+
+  (define (generate-combinations list removed)
+    (cond ((null? list) removed)
+          (else
+           (map
+            (lambda (x)
+              (generate-combinations (remove x list) (cons x removed)))
+            list))))
+
+  (define (flatten-combinations list)
+    (cond ((null? list) '())
+          ((number? (caar list)) list)
+          (else (append (flatten-combinations (car list)) (flatten-combinations (cdr list))))))
+
+  (define (baker list)
+    (list-ref list 0))
+  (define (cooper list)
+    (list-ref list 1))
+  (define (fletcher list)
+    (list-ref list 2))
+  (define (miller list)
+    (list-ref list 3))
+  (define (smith list)
+    (list-ref list 4))
+
+  (define (multiple-dwelling combinations)
+    (let*
+        ((current-combination (car combinations))
+         (baker (baker current-combination))
+         (cooper (cooper current-combination))
+         (fletcher (fletcher current-combination))
+         (miller (miller current-combination))
+         (smith (smith current-combination)))
+      (cond
+       ((null? current-combination) '())
+       ((and
+         (not (= baker 5))
+         (not (= cooper 1))
+         (not (= fletcher 5))
+         (not (= fletcher 1))
+         (> miller cooper)
+         (not (= (abs (- smith fletcher)) 1))
+         (not (= (abs (- fletcher cooper)) 1)))
+        (list (list 'baker baker)
+              (list 'cooper cooper)
+              (list 'fletcher fletcher)
+              (list 'miller miller)
+              (list 'smith smith)))
+       (else (multiple-dwelling (cdr combinations))))))
+
+  (multiple-dwelling (flatten-combinations (generate-combinations '(1 2 3 4 5) '())))
+#+END_SRC
+
+#+RESULTS:
+| baker    | 3 |
+| cooper   | 2 |
+| fletcher | 4 |
+| miller   | 5 |
+| smith    | 1 |
