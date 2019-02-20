@@ -474,6 +474,7 @@
 	(list '+ +)
 	(list '- -)
 	(list 'not not)
+	(list 'eq? eq?)
 	(list 'remainder remainder)
 	(list 'abs abs)
 	(list 'member member)))
@@ -696,3 +697,18 @@
 
     (define (smallest-divisor n)
       (find-divisor n 2))))
+
+;; boolean procedures
+
+(ambeval-helper
+ '(begin
+    (define (or a b)
+      (cond ((eq? a true) true)
+	    ((eq? b true) true)
+	    (else false)))
+    (define (and a b)
+      (cond ((eq? a false) false)
+	    ((eq? b false) false)
+	    (else true)))
+    )
+ )
