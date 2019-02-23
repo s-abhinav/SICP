@@ -1,7 +1,7 @@
 #+Title: Exercise 4.41
 Write an ordinary Scheme program to solve the multiple dwelling puzzle.
 
-#+BEGIN_SRC scheme :session 4-41
+#+BEGIN_SRC scheme :session 4-41 :exports both
   (define (remove e list)
     (cond ((null? list) '())
           ((eq? (car list) e) (remove e (cdr list)))
