@@ -19,7 +19,7 @@ Use the `amb' evaluator to solve the following puzzle:
   (load "./ambeval.scm")
 #+END_SRC
 
-#+BEGIN_SRC scheme :session 4-43
+#+BEGIN_SRC scheme :session 4-43 :exports both
   (ambeval-helper
    '(define (distinct? items)
       (cond ((null? items) true)
