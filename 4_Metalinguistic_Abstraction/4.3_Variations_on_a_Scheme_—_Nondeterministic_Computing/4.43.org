@@ -1,0 +1,136 @@
+#+Title: Exercise 4.43
+
+Use the `amb' evaluator to solve the following puzzle:
+
+     Mary Ann Moore's father has a yacht and so has each of his
+     four friends: Colonel Downing, Mr. Hall, Sir Barnacle Hood,
+     and Dr. Parker. Each of the five also has one daughter and
+     each has named his yacht after a daughter of one of the
+     others. Sir Barnacle's yacht is the Gabrielle, Mr. Moore
+     owns the Lorna; Mr. Hall the Rosalind. The Melissa, owned by
+     Colonel Downing, is named after Sir Barnacle's daughter.
+     Gabrielle's father owns the yacht that is named after Dr.
+     Parker's daughter. 
+
+**** Who is Lorna's father?
+#+BEGIN_SRC scheme :session 4-43 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-43
+  (ambeval-helper
+   '(define (distinct? items)
+      (cond ((null? items) true)
+            ((null? (cdr items)) true)
+            ((member (car items) (cdr items)) false)
+            (else (distinct? (cdr items))))))
+
+  (ambeval-helper
+   '(define (relationships)
+      (let ((moore (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+            (bernacle (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+            (hall (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+            (downing (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+            (parker (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind)))
+        (require
+         (distinct? (list moore bernacle hall downing parker)))
+        (require (eq? moore 'mary-ann))
+        (require (not (eq? bernacle 'gabrielle)))
+        (require (not (eq? hall 'rosalind)))
+        (require (not (eq? downing 'melissa)))
+        (require (eq? bernacle 'melissa))
+        (require (not (eq? parker 'gabrielle)))
+        (list (list 'moore moore)
+              (list 'bernacle bernacle)
+              (list 'hall hall)
+              (list 'downing downing)
+              (list 'parker parker)))))
+
+  (ambeval-helper '(relationships))
+#+END_SRC
+
+#+RESULTS:
+| moore    | mary-ann  |
+| bernacle | melissa   |
+| hall     | lorna     |
+| downing  | gabrielle |
+| parker   | rosalind  |
+
+**** Try to write the program so that it runs efficiently (see *NoteExercise 4-40::). 
+
+The procedure could have been made more efficient by restricting the search space in the lets.
+For instance, in the moore relationship, we already know that mary-ann is the daughter, so there was no need in listing all the possibilities in its let. The same is true for bernacle.
+
+The procedure is running so quickly in a 12" MacBook that optimizing it won't show any visible performance improvement.
+
+This is an interesting point to be noted.
+
+There's a mention in the book in regards to the relative availability of computing resources.
+
+#+BEGIN_QUOTE
+One might object that this is a hopelessly inefficient
+mechanism. It might require millions of processors to solve some
+easily stated problem this way, and most of the time most of those
+processors would be idle. This objection should be taken in the
+context of history. Memory used to be considered just such an
+expensive commodity. In 1964 a megabyte of RAM cost about $400,000.
+Now every personal computer has many megabytes of RAM, and most of the
+time most of that RAM is unused. It is hard to underestimate the cost
+of mass-produced electronics
+#+END_QUOTE
+
+Programmer time is more precious than computing time. When this problem was being solved by the authors, it was running slow on their computers. Now, it's solving the problem instantaneously on a current relatively underpowered laptop that most programmers don't even consider a viable option for their programming needs.
+
+It's encouraging for both programmers and Scheme or other Lisp dialects. amb looks promising since it's able to use all available computing power to solve problems being described in simple terms. It also means that Scheme should be used, since it's running much faster now.
+
+Paul Graham stated in one of his various essays which is sure to be found in his Hackers and Painters book, that a language designer should build the most powerful language irrespective of the era. This language should have been relevant in the past 1000 years as it should also be in the next 1000 years. What changes in the 2000 years duration? Computing power.  
+
+Elegance and power is more important.
+
+**** Also determine how many solutions there are if we are not told that Mary Ann's last name is Moore.
+
+- loop and find out the number of solutions
+
+#+BEGIN_SRC scheme :session 4-43
+    (define solution-counter 0)
+
+    (ambeval-helper
+     '(define (relationships)
+        (let ((moore (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+              (bernacle (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+              (hall (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+              (downing (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind))
+              (parker (amb 'mary-ann 'melissa 'lorna 'gabrielle 'rosalind)))
+          (require
+           (distinct? (list moore bernacle hall downing parker)))
+          (require (not (eq? bernacle 'gabrielle)))
+          (require (not (eq? hall 'rosalind)))
+          (require (not (eq? downing 'melissa)))
+          (require (eq? bernacle 'melissa))
+          (require (not (eq? parker 'gabrielle)))
+          (list (list 'moore moore)
+                (list 'bernacle bernacle)
+                (list 'hall hall)
+                (list 'downing downing)
+                (list 'parker parker)))))
+
+    (ambeval-helper '(relationships))
+
+    (set! solution-counter (+ 1 solution-counter))
+
+    (define (try-again-loop)
+      (try-again)
+      (set! solution-counter (+ 1 solution-counter))
+      (try-again-loop))
+
+    (try-again-loop)
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-43 :exports both
+  solution-counter
+#+END_SRC
+
+#+RESULTS:
+: 14
