@@ -672,12 +672,9 @@
       (let ((a (an-element-of list1))
             (b (an-element-of list2)))
 	(require (prime? (+ a b)))
-	(list a b)))))
+	(list a b)))
 
-;; prime? installation
-(ambeval-helper
- '(begin
-
+    ;; prime? installation
     (define (square x) (* x x))
 
     (define (divides? a b)
@@ -696,12 +693,9 @@
       (= n (smallest-divisor n)))
 
     (define (smallest-divisor n)
-      (find-divisor n 2))))
-
-;; boolean procedures
-
-(ambeval-helper
- '(begin
+      (find-divisor n 2))
+    
+    ;; boolean procedures
     (define (or a b)
       (cond ((eq? a true) true)
 	    ((eq? b true) true)
@@ -710,5 +704,13 @@
       (cond ((eq? a false) false)
 	    ((eq? b false) false)
 	    (else true)))
+
+    ;; utilities
+    (define (distinct? items)
+      (cond ((null? items) true)
+            ((null? (cdr items)) true)
+            ((member (car items) (cdr items)) false)
+            (else (distinct? (cdr items)))))
+
     )
  )
