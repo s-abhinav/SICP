@@ -1,0 +1,54 @@
+#+Title: Exercise 4.44
+
+#+BEGIN_SRC scheme :session 4-44 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-44 :exports both
+  (ambeval-helper
+   '(begin
+      (define (enumerate from to)
+        (cond ((= from to) (list to))
+              (else
+               (cons from (enumerate (+ 1 from) to)))))
+
+      (define (map f list)
+        (cond ((null? list) '())
+              (else
+               (cons (f (car list)) (map f (cdr list))))))
+
+      (define (member-diagonal f e list)
+        (cond ((null? list) false)
+              ((= (f e 1) (car list)) true)
+              (else (member-diagonal f (f e 1) (cdr list)))))
+
+      (define (safe-diagonal? f items)
+        (cond ((null? items) true)
+              ((null? (cdr items)) true)
+              ((member-diagonal f (car items) (cdr items)) false)
+              (else (safe-diagonal? f (cdr items)))))
+
+      (define (queens board-size)
+        (let ((columns (enumerate 1 board-size)))
+          (let ((positions (map
+                            (lambda (x)
+                              (an-element-of (enumerate 1 board-size)))
+                            columns)))
+            (require (distinct? positions))
+            (require (safe-diagonal? + positions))
+            (require (safe-diagonal? - positions))
+            positions)))
+      )
+   )
+
+  (ambeval-helper '(queens 8))
+#+END_SRC
+
+#+RESULTS:
+| 1 | 5 | 8 | 6 | 3 | 7 | 2 | 4 |
+
+The org mode code block execution timed out while running this problem. I had to manually fetch the results from the Guile console.
+
+This took more than 10 seconds to complete and could be optimized to run faster.
