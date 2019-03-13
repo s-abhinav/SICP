@@ -1,5 +1,8 @@
 #+Title: Exercise 4.45
 
+With the grammar given above, the following sentence can be parsed in five different ways: "The professor lectures to the student in the class with the cat." Give the five parses and explain the differences in shades of meaning among them.
+
+
 #+BEGIN_SRC scheme :session 4-45 :exports none :results output silent
   (use-modules (ice-9 pretty-print))
 
@@ -172,3 +175,12 @@ ERROR: In procedure scm-error:
 Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
 scheme@(guile-user) [1]> 
 #+END_SRC
+
+I won't explain all the differences, but it's clear from the parses that the input sentence has overlaping structures, causing the parser to go into different search brances.
+
+The shades mainly reside in the cat's location.
+
+Is the professor or the student the owner of the cat?
+Or, is the cat following the lecture in the class as a student?
+
+There are other two that I can't think of.
