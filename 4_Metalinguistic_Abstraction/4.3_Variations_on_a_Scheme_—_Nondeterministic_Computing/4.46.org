@@ -1,0 +1,14 @@
+#+Title: Exercise 4.46
+
+The structure of our language is given in a specific order. For instance
+
+#+BEGIN_SRC scheme :eval no
+  (define (parse-sentence)
+    (list 'sentence
+           (parse-noun-phrase)
+           (parse-verb-phrase)))
+#+END_SRC
+
+There's parse-noune-phrase followed by parse-verb-phrase.
+
+If the evaluator evaluated from right to left, this parsing would fail. 
