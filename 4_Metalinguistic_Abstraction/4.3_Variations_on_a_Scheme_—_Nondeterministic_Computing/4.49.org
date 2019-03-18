@@ -1,0 +1,187 @@
+#+Title: Exercise 4.49
+
+Alyssa P. Hacker is more interested in generating interesting sentences than in parsing them. She reasons that by simply changing the procedure `parse-word' so that it ignores the "input sentence" and instead always succeeds and generates an appropriate word, we can use the programs we had built for parsing to do generation instead. Implement Alyssa's idea, and show the first half-dozen or so sentences generated.
+
+#+BEGIN_SRC scheme :session 4-49 :exports none :results output silent
+  (use-modules (ice-9 pretty-print))
+
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+#+RESULTS:
+: ok
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (ambeval-helper
+   '(define (parse-word word-list)
+      (list (car word-list) (amb (cdr word-list)))))
+
+  (pretty-print
+   (ambeval-helper '(parse '())))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb (studies lectures eats sleeps)))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (pretty-print (try-again))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb-phrase
+    (verb (studies lectures eats sleeps))
+    (prep-phrase
+      (prep (for to in by with))
+      (simple-noun-phrase
+        (article (the a))
+        (noun (student professor cat class))))))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (pretty-print (try-again))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb-phrase
+    (verb-phrase
+      (verb (studies lectures eats sleeps))
+      (prep-phrase
+        (prep (for to in by with))
+        (simple-noun-phrase
+          (article (the a))
+          (noun (student professor cat class)))))
+    (prep-phrase
+      (prep (for to in by with))
+      (simple-noun-phrase
+        (article (the a))
+        (noun (student professor cat class))))))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (pretty-print (try-again))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb-phrase
+    (verb-phrase
+      (verb-phrase
+        (verb (studies lectures eats sleeps))
+        (prep-phrase
+          (prep (for to in by with))
+          (simple-noun-phrase
+            (article (the a))
+            (noun (student professor cat class)))))
+      (prep-phrase
+        (prep (for to in by with))
+        (simple-noun-phrase
+          (article (the a))
+          (noun (student professor cat class)))))
+    (prep-phrase
+      (prep (for to in by with))
+      (simple-noun-phrase
+        (article (the a))
+        (noun (student professor cat class))))))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (pretty-print (try-again))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb-phrase
+    (verb-phrase
+      (verb-phrase
+        (verb-phrase
+          (verb (studies lectures eats sleeps))
+          (prep-phrase
+            (prep (for to in by with))
+            (simple-noun-phrase
+              (article (the a))
+              (noun (student professor cat class)))))
+        (prep-phrase
+          (prep (for to in by with))
+          (simple-noun-phrase
+            (article (the a))
+            (noun (student professor cat class)))))
+      (prep-phrase
+        (prep (for to in by with))
+        (simple-noun-phrase
+          (article (the a))
+          (noun (student professor cat class)))))
+    (prep-phrase
+      (prep (for to in by with))
+      (simple-noun-phrase
+        (article (the a))
+        (noun (student professor cat class))))))
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-49 :exports both :results output code
+  (pretty-print (try-again))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(sentence
+  (simple-noun-phrase
+    (article (the a))
+    (noun (student professor cat class)))
+  (verb-phrase
+    (verb-phrase
+      (verb-phrase
+        (verb-phrase
+          (verb-phrase
+            (verb (studies lectures eats sleeps))
+            (prep-phrase
+              (prep (for to in by with))
+              (simple-noun-phrase
+                (article (the a))
+                (noun (student professor cat class)))))
+          (prep-phrase
+            (prep (for to in by with))
+            (simple-noun-phrase
+              (article (the a))
+              (noun (student professor cat class)))))
+        (prep-phrase
+          (prep (for to in by with))
+          (simple-noun-phrase
+            (article (the a))
+            (noun (student professor cat class)))))
+      (prep-phrase
+        (prep (for to in by with))
+        (simple-noun-phrase
+          (article (the a))
+          (noun (student professor cat class)))))
+    (prep-phrase
+      (prep (for to in by with))
+      (simple-noun-phrase
+        (article (the a))
+        (noun (student professor cat class))))))
+#+END_SRC
