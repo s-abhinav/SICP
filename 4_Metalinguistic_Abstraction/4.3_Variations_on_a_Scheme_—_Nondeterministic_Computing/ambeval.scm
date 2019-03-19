@@ -10,6 +10,8 @@
 
 (define (amb? exp) (tagged-list? exp 'amb))
 
+(define (ramb? exp) (tagged-list? exp 'ramb))
+
 (define (amb-choices exp) (cdr exp))
 
 (define (cond? exp) (tagged-list? exp 'cond))
@@ -247,6 +249,11 @@
 
 (define (procedure-environment p) (cadddr p))
 
+(define (remove list k)
+  (cond ((null? list) '())
+	((= k 0) list)
+	((= k 1) (cdr list))
+	(else (cons (car list) (remove (cdr list) (- k 1))))))
 
 ;;; Evaluator
 
@@ -267,6 +274,7 @@
 (define (analyze exp)
   (cond
    ((amb? exp) (analyze-amb exp))
+   ((ramb? exp) (analyze-ramb exp))
    ((self-evaluating? exp)
     (analyze-self-evaluating exp))
    ((let? exp)
@@ -424,6 +432,20 @@
              succeed
              (lambda ()
                (try-next (cdr choices))))))
+      (try-next cprocs))))
+
+(define (analyze-ramb exp)
+  (let ((cprocs (map analyze (amb-choices exp))))
+    (lambda (env succeed fail)
+      (define (try-next choices)
+	(set! amb-counter (+ 1 amb-counter))
+        (let
+	    ((index (random (length choices))))
+	    (if (null? choices)
+             (fail)
+             ((list-ref choices index) env succeed
+		 (lambda ()
+		   (try-next (remove choices (+ 1 index))))))))
       (try-next cprocs))))
 
 ;;; Do not re evaluate this procedure twice in the
@@ -664,6 +686,10 @@
     (define (an-element-of items)
       (require (not (null? items)))
       (amb (car items) (an-element-of (cdr items))))
+
+    (define (a-random-element-of items)
+      (require (not (null? items)))
+      (ramb (car items) (a-random-element-of (cdr items))))
 
     (define (an-integer-starting-from n)
       (amb n (an-integer-starting-from (+ n 1))))

@@ -1,0 +1,89 @@
+#+Title: Exercise 4.50
+Implement a new special form ~ramb~ that is like ~amb~ except that it searches alternatives in a random order, rather than from left to right. Show how this can help with Alyssa's problem in *Note Exercise 4-49.
+
+#+BEGIN_SRC scheme :session 4-50 :exports none :results output silent
+  (use-modules (ice-9 pretty-print))
+
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-50 :exports both :results output code
+  (ambeval-helper
+   '(begin
+      (define (parse-verb-phrase)
+        (define (maybe-extend verb-phrase)
+          (ramb
+           verb-phrase
+           (maybe-extend (list 
+                          verb-phrase
+                          (parse-prepositional-phrase)))))
+        (maybe-extend (parse-word verbs)))
+
+      (define (parse-noun-phrase)
+        (define (maybe-extend noun-phrase)
+          (ramb noun-phrase
+                (maybe-extend (list 
+                               noun-phrase
+                               (parse-prepositional-phrase)))))
+        (maybe-extend (parse-simple-noun-phrase)))
+
+    (define (parse-word word-list)
+      (a-random-element-of (cdr word-list)))))
+
+  (pretty-print
+   (ambeval-helper '(parse '())))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+  ;;; Starting a new problem 
+  ;;; Starting a new problem 
+  (sentence
+    ((simple-noun-phrase a class)
+     (prep-phrase
+       to
+       ((simple-noun-phrase a professor)
+        (prep-phrase
+          for
+          ((simple-noun-phrase a professor)
+           (prep-phrase
+             to
+             (((simple-noun-phrase the class)
+               (prep-phrase
+                 for
+                 ((((((simple-noun-phrase a professor)
+                      (prep-phrase in (simple-noun-phrase a student)))
+                     (prep-phrase to (simple-noun-phrase a professor)))
+                    (prep-phrase for (simple-noun-phrase a student)))
+                   (prep-phrase
+                     for
+                     (((simple-noun-phrase the professor)
+                       (prep-phrase
+                         by
+                         ((simple-noun-phrase a professor)
+                          (prep-phrase
+                            for
+                            ((simple-noun-phrase the professor)
+                             (prep-phrase to (simple-noun-phrase a student)))))))
+                      (prep-phrase by (simple-noun-phrase a student)))))
+                  (prep-phrase
+                    to
+                    (simple-noun-phrase the professor)))))
+              (prep-phrase
+                for
+                (simple-noun-phrase the student)))))))))
+    ((lectures
+       (prep-phrase
+         to
+         (simple-noun-phrase the professor)))
+     (prep-phrase
+       for
+       ((simple-noun-phrase a student)
+        (prep-phrase
+          for
+          (simple-noun-phrase the professor))))))
+#+END_SRC
+
+The first result is good enough with a varied structure. I'm not satisfied with the implementation since the subsequent results are too deep. Maybe it's the nature of the original implementation. 
