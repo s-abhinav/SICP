@@ -116,6 +116,9 @@
 (define (assignment? exp)
   (tagged-list? exp 'set!))
 
+(define (permanent-assignment? exp)
+  (tagged-list? exp 'permanent-set!))
+
 (define (tagged-list? exp tag)
   (if (pair? exp)
       (eq? (car exp) tag)
@@ -282,6 +285,7 @@
    ((quoted? exp) (analyze-quoted exp))
    ((variable? exp) (analyze-variable exp))
    ((assignment? exp) (analyze-assignment exp))
+   ((permanent-assignment? exp) (analyze-assignment-permanent exp))
    ((definition? exp) (analyze-definition exp))
    ((if? exp) (analyze-if exp))
    ((lambda? exp) (analyze-lambda exp))
@@ -320,6 +324,16 @@
                                                  old-value
                                                  env)
                             (fail2)))))
+             fail))))
+
+(define (analyze-assignment-permanent exp)
+  (let ((var (assignment-variable exp))
+        (vproc (analyze (assignment-value exp))))
+    (lambda (env succeed fail)
+      (vproc env
+             (lambda (val fail2)        ; *1*
+               (set-variable-value! var val env)
+               (succeed 'ok fail2))
              fail))))
 
 (define (analyze-definition exp)
