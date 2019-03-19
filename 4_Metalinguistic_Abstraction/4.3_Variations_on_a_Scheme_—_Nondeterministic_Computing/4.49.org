@@ -10,13 +10,10 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
   (load "./ambeval.scm")
 #+END_SRC
 
-#+RESULTS:
-: ok
-
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
   (ambeval-helper
    '(define (parse-word word-list)
-      (list (car word-list) (amb (cdr word-list)))))
+      (an-element-of (cdr word-list))))
 
   (pretty-print
    (ambeval-helper '(parse '())))
@@ -24,12 +21,13 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 
 #+RESULTS:
 #+BEGIN_SRC scheme
+;;; Starting a new problem 
+;;; Starting a new problem 
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
-  (verb (studies lectures eats sleeps)))
+  (simple-noun-phrase the student)
+  studies)
 #+END_SRC
+
 
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
   (pretty-print (try-again))
@@ -38,16 +36,12 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 #+RESULTS:
 #+BEGIN_SRC scheme
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
+  (simple-noun-phrase the student)
   (verb-phrase
-    (verb (studies lectures eats sleeps))
+    studies
     (prep-phrase
-      (prep (for to in by with))
-      (simple-noun-phrase
-        (article (the a))
-        (noun (student professor cat class))))))
+      for
+      (simple-noun-phrase the student))))
 #+END_SRC
 
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
@@ -57,22 +51,16 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 #+RESULTS:
 #+BEGIN_SRC scheme
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
+  (simple-noun-phrase the student)
   (verb-phrase
     (verb-phrase
-      (verb (studies lectures eats sleeps))
+      studies
       (prep-phrase
-        (prep (for to in by with))
-        (simple-noun-phrase
-          (article (the a))
-          (noun (student professor cat class)))))
+        for
+        (simple-noun-phrase the student)))
     (prep-phrase
-      (prep (for to in by with))
-      (simple-noun-phrase
-        (article (the a))
-        (noun (student professor cat class))))))
+      for
+      (simple-noun-phrase the student))))
 #+END_SRC
 
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
@@ -82,28 +70,20 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 #+RESULTS:
 #+BEGIN_SRC scheme
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
+  (simple-noun-phrase the student)
   (verb-phrase
     (verb-phrase
       (verb-phrase
-        (verb (studies lectures eats sleeps))
+        studies
         (prep-phrase
-          (prep (for to in by with))
-          (simple-noun-phrase
-            (article (the a))
-            (noun (student professor cat class)))))
+          for
+          (simple-noun-phrase the student)))
       (prep-phrase
-        (prep (for to in by with))
-        (simple-noun-phrase
-          (article (the a))
-          (noun (student professor cat class)))))
+        for
+        (simple-noun-phrase the student)))
     (prep-phrase
-      (prep (for to in by with))
-      (simple-noun-phrase
-        (article (the a))
-        (noun (student professor cat class))))))
+      for
+      (simple-noun-phrase the student))))
 #+END_SRC
 
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
@@ -113,34 +93,24 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 #+RESULTS:
 #+BEGIN_SRC scheme
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
+  (simple-noun-phrase the student)
   (verb-phrase
     (verb-phrase
       (verb-phrase
         (verb-phrase
-          (verb (studies lectures eats sleeps))
+          studies
           (prep-phrase
-            (prep (for to in by with))
-            (simple-noun-phrase
-              (article (the a))
-              (noun (student professor cat class)))))
+            for
+            (simple-noun-phrase the student)))
         (prep-phrase
-          (prep (for to in by with))
-          (simple-noun-phrase
-            (article (the a))
-            (noun (student professor cat class)))))
+          for
+          (simple-noun-phrase the student)))
       (prep-phrase
-        (prep (for to in by with))
-        (simple-noun-phrase
-          (article (the a))
-          (noun (student professor cat class)))))
+        for
+        (simple-noun-phrase the student)))
     (prep-phrase
-      (prep (for to in by with))
-      (simple-noun-phrase
-        (article (the a))
-        (noun (student professor cat class))))))
+      for
+      (simple-noun-phrase the student))))
 #+END_SRC
 
 #+BEGIN_SRC scheme :session 4-49 :exports both :results output code
@@ -150,38 +120,27 @@ Alyssa P. Hacker is more interested in generating interesting sentences than in 
 #+RESULTS:
 #+BEGIN_SRC scheme
 (sentence
-  (simple-noun-phrase
-    (article (the a))
-    (noun (student professor cat class)))
+  (simple-noun-phrase the student)
   (verb-phrase
     (verb-phrase
       (verb-phrase
         (verb-phrase
           (verb-phrase
-            (verb (studies lectures eats sleeps))
+            studies
             (prep-phrase
-              (prep (for to in by with))
-              (simple-noun-phrase
-                (article (the a))
-                (noun (student professor cat class)))))
+              for
+              (simple-noun-phrase the student)))
           (prep-phrase
-            (prep (for to in by with))
-            (simple-noun-phrase
-              (article (the a))
-              (noun (student professor cat class)))))
+            for
+            (simple-noun-phrase the student)))
         (prep-phrase
-          (prep (for to in by with))
-          (simple-noun-phrase
-            (article (the a))
-            (noun (student professor cat class)))))
+          for
+          (simple-noun-phrase the student)))
       (prep-phrase
-        (prep (for to in by with))
-        (simple-noun-phrase
-          (article (the a))
-          (noun (student professor cat class)))))
+        for
+        (simple-noun-phrase the student)))
     (prep-phrase
-      (prep (for to in by with))
-      (simple-noun-phrase
-        (article (the a))
-        (noun (student professor cat class))))))
+      for
+      (simple-noun-phrase the student))))
 #+END_SRC
+
