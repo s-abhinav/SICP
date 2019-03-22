@@ -77,6 +77,8 @@
 
 (define (if? exp) (tagged-list? exp 'if))
 
+(define (if-fail? exp) (tagged-list? exp 'if-fail))
+
 (define (if-predicate exp) (cadr exp))
 
 (define (if-consequent exp) (caddr exp))
@@ -288,6 +290,7 @@
    ((permanent-assignment? exp) (analyze-assignment-permanent exp))
    ((definition? exp) (analyze-definition exp))
    ((if? exp) (analyze-if exp))
+   ((if-fail? exp) (analyze-if-fail exp))
    ((lambda? exp) (analyze-lambda exp))
    ((begin? exp) (analyze-sequence (begin-actions exp)))
    ((cond? exp) (analyze (cond->if exp)))
@@ -360,6 +363,17 @@
                    (aproc env succeed fail2)))
              ;; failure continuation for evaluating the predicate
              fail))))
+
+(define (analyze-if-fail exp)
+  (let ((pproc (analyze (if-predicate exp)))
+        (aproc (analyze (if-consequent exp))))
+    (lambda (env succeed fail)
+      (pproc env
+	     succeed
+	     ;; failure continuation
+	     ;; -> do not fail, return the alternative value
+             (lambda ()
+	       (aproc env succeed fail))))))
 
 (define (analyze-lambda exp)
   (let ((vars (lambda-parameters exp))
@@ -513,7 +527,10 @@
 	(list 'eq? eq?)
 	(list 'remainder remainder)
 	(list 'abs abs)
-	(list 'member member)))
+	(list 'member member)
+	(list 'even? even?)
+	(list 'odd? odd?)
+	))
 
 (define (primitive-procedure-names)
   (map car
