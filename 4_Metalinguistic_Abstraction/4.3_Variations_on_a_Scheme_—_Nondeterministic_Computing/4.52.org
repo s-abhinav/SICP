@@ -1,0 +1,76 @@
+#+Title: Exercise 4.52
+
+Implement a new construct called ~if-fail~ that permits the user to catch the failure of an expression. ~If-fail~ takes two expressions. It evaluates the first expression as usual and returns as usual if the evaluation succeeds. If the evaluation fails, however, the value of the second expression is returned, as in the following example:
+
+#+BEGIN_SRC scheme :eval no
+  ;;; Amb-Eval input:
+  (if-fail (let ((x (an-element-of '(1 3 5))))
+             (require (even? x))
+             x)
+           'all-odd)
+  ;;; Starting a new problem
+  ;;; Amb-Eval value:
+  all-odd
+
+  ;;; Amb-Eval input:
+  (if-fail (let ((x (an-element-of '(1 3 5 8))))
+             (require (even? x))
+             x)
+           'all-odd)
+  ;;; Starting a new problem
+  ;;; Amb-Eval value:
+  8
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-52 :exports none :results output silent
+  (use-modules (ice-9 pretty-print))
+
+  (add-to-load-path (dirname "./"))
+
+  (load "./ambeval.scm")
+#+END_SRC
+
+* See ambeval.scm for the if-fail implementation
+#+BEGIN_SRC scheme :eval no
+  (define (analyze-if-fail exp)
+    (let ((pproc (analyze (if-predicate exp)))
+          (aproc (analyze (if-consequent exp))))
+      (lambda (env succeed fail)
+        (pproc env
+               succeed
+               ;; failure continuation
+               ;; -> do not fail, return the alternative value
+               (lambda ()
+                 (aproc env succeed fail))))))
+#+END_SRC
+
+* Tests
+#+BEGIN_SRC scheme :session 4-52 :exports both :results output code
+  (pretty-print
+   (ambeval-helper
+    '(if-fail (let ((x (an-element-of '(1 3 5))))
+                (require (even? x))
+                x)
+              'all-odd)))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+;;; Starting a new problem 
+all-odd
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 4-52 :exports both :results output code
+  (pretty-print
+   (ambeval-helper
+    '(if-fail (let ((x (an-element-of '(1 3 5 8))))
+                (require (even? x))
+                x)
+              'all-odd)))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+;;; Starting a new problem 
+8
+#+END_SRC
