@@ -1,0 +1,17 @@
+#+Title: Exercise 5.2
+
+Use the register-machine language to describe the iterative factorial machine of *Note Exercise 5-1::.
+
+#+BEGIN_SRC scheme :eval no
+  (controller
+   test-c
+   (test (op >) (reg c) (const 1))
+   (branch (label fib-done))
+   (assign t1 (op *) (reg p) (reg c))
+   (assign t2 (op +) (reg c) (const 1))
+   (assign p (reg t1))
+   (assign c (reg t2))
+   (goto (label test-c))
+   fib-done)
+#+END_SRC
+
