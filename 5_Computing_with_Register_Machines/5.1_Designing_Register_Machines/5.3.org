@@ -1,0 +1,71 @@
+#+Title: Exercise 5.3
+Design a machine to compute square roots using Newton's method, as described in section *Note 1-1-7:::
+
+#+BEGIN_SRC scheme :eval no
+  (define (sqrt x)
+    (define (good-enough? guess)
+      (< (abs (- (square guess) x)) 0.001))
+    (define (improve guess)
+      (average guess (/ x guess)))
+    (define (sqrt-iter guess)
+      (if (good-enough? guess)
+          guess
+          (sqrt-iter (improve guess))))
+    (sqrt-iter 1.0))
+#+END_SRC
+
+Begin by assuming that `good-enough?' and `improve' operations are available as primitives. Then show how to expand these in terms of arithmetic operations. Describe each version of the `sqrt' machine design by drawing a data-path diagram and writing a controller definition in the register-machine language.
+
+* Versions
+** sqrt-iter
+*** data-path
+[[./images/5.3/5.3a.svg]]
+
+*** controller
+#+BEGIN_SRC scheme :eval no
+  (controller
+   (assign g (const 1))
+   test-guess
+   (test (op g-e?) (reg g))
+   (branch (label sqrt-done))
+   (assign g (op i) (reg g))
+   (goto (label test-guess))
+   sqrt-done)
+#+END_SRC
+
+** improve
+*** data-path
+[[./images/5.3/5.3b.svg]]
+
+*** controller
+#+BEGIN_SRC scheme :eval no
+  (controller
+   (assign g (const 1))
+   test-guess
+   (test (op g-e?) (reg g))
+   (branch (label sqrt-done))
+   (assign t1 (op /) (reg x) (reg g))
+   (assign g (op avg) (reg g) (reg t1))
+   (goto (label test-guess))
+   sqrt-done)
+#+END_SRC
+
+** good-enough?
+*** data-path
+[[./images/5.3/5.3c.svg]]
+
+*** controller
+#+BEGIN_SRC scheme :eval no
+  (controller
+   (assign g (const 1))
+   test-guess
+   (assign t2 (op sq) (reg g))
+   (assign t3 (op -) (reg t2) (reg x))
+   (assign t4 (op abs) (reg t3))
+   (test (op <) (reg t4) (reg (const 0.001)))
+   (branch (label sqrt-done))
+   (assign t1 (op /) (reg x) (reg g))
+   (assign g (op avg) (reg g) (reg t1))
+   (goto (label (test-guess)))
+   sqrt-done)
+#+END_SRC
