@@ -14,7 +14,7 @@ Specify register machines that implement each of the following procedures. For e
 ** Controller
 #+BEGIN_SRC scheme :eval no
   (controller
-   (assign continuer (label expt-done))
+   (assign continue (label expt-done))
 
    expt-loop
    (test (op =) (reg n) (const 0))
