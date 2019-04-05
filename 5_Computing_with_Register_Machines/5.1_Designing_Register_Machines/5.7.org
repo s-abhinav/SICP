@@ -1,0 +1,68 @@
+#+Title: Exercise 5.7
+
+Use the simulator to test the machines you designed in *Note [[5.4.org][Exercise 5-4]].
+
+Since the machine model has not been introduced yet, I will only be able to write the definition here and won't be able to run it. It's a similar case to the amb eval section of chapter 4 where the book requires the completion of exercises without yet introducing the evaluator and aknowledges about this. Not sure what's the best way to approach this. Anyway, maybe I'll run it when I'm done implementing 5.2.1 The Machine Model.
+
+*  a. Recursive exponentiation:
+#+BEGIN_SRC scheme :eval no
+  (define recursive-expt
+    (make-machine
+     '(b n val)
+     (list (list '= =)
+           (list '- -)
+           (list '* *))
+     '((assign continue (label expt-done))
+
+       expt-loop
+       (test (op =) (reg n) (const 0))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-expt))
+       (goto (label expt-loop))
+
+       after-expt
+       (restore continue)
+       (restore n)
+       (assign val (op *) (reg b) (reg val))
+       (goto (reg continue))
+
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       expt-done)))
+
+  (set-register-contents! recursive-expt 'b 2)
+  (set-register-contents! recursive-expt 'n 3)
+  (start recursive-expt)
+  (get-register-contents! recursive-expt 'val)
+#+END_SRC
+
+*  b. Iterative exponentiation:
+#+BEGIN_SRC scheme :eval no
+  (define iter-expt
+    (make-machine
+     '(counter product b n)
+     (list (list '= =)
+           (list '- -)
+           (list '* *))
+     '((assign product (const 1))
+       (assign counter (reg n))
+
+       exp-iter
+       (test (op =) (reg counter) (const 0))
+       (branch expt-done)
+       (assign counter (op -) (reg counter) (const 1))
+       (assign product (op *) (reg b) (reg product))
+       (goto (label expt-iter))
+
+       expt-done)))
+
+    (set-register-contents! iter-expt 'b 2)
+    (set-register-contents! iter-expt 'n 3)
+    (start iter-expt)
+    (get-register-contents! iter-expt 'product)
+
+#+END_SRC
