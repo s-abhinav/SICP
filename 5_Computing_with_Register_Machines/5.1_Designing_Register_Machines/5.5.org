@@ -1,0 +1,62 @@
+#+Title: Exercise 5.5
+Hand-simulate the factorial and Fibonacci machines, using some nontrivial input (requiring execution of at least one recursive call). Show the contents of the stack at each significant point in the execution.
+
+- Time starts at the top most row.
+- Each set of assign, save or restore has a new row in time. Repeated assigns, saves or restores use the same row.
+- The stack builds from the left. I found it more intuitive since the registers are to the left of it and it helps to mentally visualize how it's moving from the stack column to the register column which is on the left of it.
+- n-reg does not need the initial assign since it's assumed that it got it from the first call of the procedure.
+
+* Factorial
+
+** (factorial 2)
+
+| val-reg | n-reg | continue-reg | n-stack | continue-stack |
+|---------+-------+--------------+---------+----------------|
+|         |     2 | fact-done    |         |                |
+|         |     2 | fact-done    |       2 | fact-done      |
+|         |     1 | after-fact   |       2 | fact-done      |
+|       1 |     1 | after-fact   |       2 | fact-done      |
+|       2 |     2 | fact-done    |         |                |
+
+** (factorial 3)
+| val-reg | n-reg | continue-reg | n-stack | continue-stack       |
+|---------+-------+--------------+---------+----------------------|
+|         |     3 | fact-done    |         |                      |
+|         |     3 | fact-done    |       3 | fact-done            |
+|         |     2 | after-fact   |       3 | fact-done            |
+|         |     2 | after-fact   |     3:2 | after-fact:fact-done |
+|         |     1 | after-fact   |     3:2 | after-fact:fact-done |
+|       1 |     1 | after-fact   |     3:2 | after-fact:fact-done |
+|       3 |     3 | after-fact   |       2 | fact-done            |
+|       6 |     2 | fact-done    |         |                      |
+
+* Fibonacci
+** (fib 3)
+| val-reg | n-reg | continue-reg | val-stack | n-stack | continue-stack        |
+|---------+-------+--------------+-----------+---------+-----------------------|
+|         |     3 | fib-done     |           |         | fib-done              |
+|         |     3 | afterfib-n-1 |           |       3 | fib-done              |
+|         |     2 | afterfib-n-1 |           |       3 | fib-done              |
+|         |     2 | afterfib-n-1 |           |       3 | afterfib-n-1:fib-done |
+|         |     2 | afterfib-n-1 |           |     2:3 | afterfib-n-1:fib-done |
+|         |     1 | afterfib-n-1 |           |     2:3 | afterfib-n-1:fib-done |
+|       1 |     1 | afterfib-n-1 |           |     2:3 | afterfib-n-1:fib-done |
+|       1 |     2 | afterfib-n-1 |           |       3 | fib-done              |
+|       1 |     0 | afterfib-n-1 |           |       3 | afterfib-n-1:fib-done |
+|       1 |     0 | afterfib-n-2 |         1 |       3 | afterfib-n-1:fib-done |
+|       0 |     0 | afterfib-n-2 |         1 |       3 | afterfib-n-1:fib-done |
+|       1 |     0 | afterfib-n-1 |           |       3 | fib-done              |
+|       1 |     0 | afterfib-n-1 |           |       3 | fib-done              |
+|       1 |     3 | fib-done     |           |         |                       |
+|       1 |     1 | fib-done     |           |         | fib-done              |
+|       1 |     1 | afterfib-n-2 |           |         | fib-done              |
+|       1 |     1 | afterfib-n-2 |         1 |         | fib-done              |
+|       1 |     1 | afterfib-n-2 |         1 |         | fib-done              |
+|       1 |     1 | fib-done     |         1 |         |                       |
+|       2 |     1 | fib-done     |           |         |                       |
+
+
+
+
+
+
