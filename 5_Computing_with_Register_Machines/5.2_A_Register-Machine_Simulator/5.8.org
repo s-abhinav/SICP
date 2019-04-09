@@ -1,0 +1,41 @@
+#+Title: Exercise 5.8
+
+The following register-machine code is ambiguous, because the label ~here~ is defined more than once:
+
+#+BEGIN_SRC scheme :eval no
+  start
+    (goto (label here))
+  here
+    (assign a (const 3))
+    (goto (label there))
+  here
+    (assign a (const 4))
+    (goto (label there))
+  there
+#+END_SRC
+
+**** With the simulator as written, what will the contents of register ~a~ be when control reaches ~there~? 
+It will be 3.
+
+From make-goto, it uses lookup-label, which in turn uses assoc to do the actual lookup.
+In the Guile Scheme implementation, assoc fetches the first occurence of the key and returns the value.
+
+**** Modify the ~extract-labels~ procedure so that the assembler will signal an error if the same label name is used to indicate two different locations.
+
+I'm not sure when to test this out since I haven't yet implemented the machine simulator.
+
+#+BEGIN_SRC scheme :eval no
+  (define (extract-labels text)
+    (if (null? text)
+        (cons '() '())
+        (let ((result (extract-labels (cdr text))))
+          (let ((insts (car result)) (labels (cdr result)))
+            (let ((next-inst (car text)))
+              (if (symbol? next-inst)
+                  (if (assoc next-inst labels)
+                      (error "Duplicate label -- ASSEMBLE" next-inst)
+                   (cons insts
+                         (cons (make-label-entry next-inst insts) labels)))
+                  (cons (cons (make-instruction next-inst) insts)
+                        labels)))))))
+#+END_SRC
