@@ -1,6 +1,6 @@
 #+Title: Exercise 5.7
 
-Use the simulator to test the machines you designed in *Note [[5.4.org][Exercise 5-4]].
+Use the simulator to test the machines you designed in *Note [[../5.1_Designing_Register_Machines/5.4.org][Exercise 5-4]].
 
 Since the machine model has not been introduced yet, I will only be able to write the definition here and won't be able to run it. It's a similar case to the amb eval section of chapter 4 where the book requires the completion of exercises without yet introducing the evaluator and aknowledges about this. Not sure what's the best way to approach this. Anyway, maybe I'll run it when I'm done implementing 5.2.1 The Machine Model.
 
