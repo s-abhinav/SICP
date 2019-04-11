@@ -24,18 +24,47 @@ In the Guile Scheme implementation, assoc fetches the first occurence of the key
 
 I'm not sure when to test this out since I haven't yet implemented the machine simulator.
 
-#+BEGIN_SRC scheme :eval no
-  (define (extract-labels text)
-    (if (null? text)
-        (cons '() '())
-        (let ((result (extract-labels (cdr text))))
-          (let ((insts (car result)) (labels (cdr result)))
-            (let ((next-inst (car text)))
-              (if (symbol? next-inst)
-                  (if (assoc next-inst labels)
-                      (error "Duplicate label -- ASSEMBLE" next-inst)
-                   (cons insts
-                         (cons (make-label-entry next-inst insts) labels)))
-                  (cons (cons (make-instruction next-inst) insts)
-                        labels)))))))
+Update: It turns out that I had the other version of the extract-labels before, which is not compatible with what I have in machine. Updated the extract-labels to use continuations as the original version in the book, added the error for duplicate labels and it looks good. I can't get it show up nicely in org mode's result block though.
+
+#+BEGIN_SRC scheme :session 5-8 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
 #+END_SRC
+
+
+#+BEGIN_SRC scheme :session 5-8 :exports both
+  (define (extract-labels text receive)
+    (if (null? text)
+        (receive '() '())
+        (extract-labels
+         (cdr text)
+         (lambda (insts labels)
+           (let ((next-inst (car text)))
+             (if (symbol? next-inst)
+                 (if (assoc next-inst labels)
+                     (error "Duplicate label -- ASSEMBLE" next-inst)
+                  (receive
+                      insts
+                      (cons (make-label-entry next-inst insts) labels)))
+                 (receive
+                     (cons (make-instruction next-inst) insts)
+                     labels)))))))
+
+  (define gcd-machine
+    (make-machine
+     '(a b t)
+     (list (list 'rem remainder) (list '= =))
+     '(test-b
+       (test (op =) (reg b) (const 0))
+       (branch (label gcd-done))
+       (assign t (op rem) (reg a) (reg b))
+       (assign a (reg b))
+       (assign b (reg t))
+       test-b
+       (goto (label test-b))
+       gcd-done)))
+#+END_SRC
+
+#+RESULTS:
+: Duplicate label -- ASSEMBLE test-b
