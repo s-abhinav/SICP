@@ -1,14 +1,24 @@
 #+Title: Exercise 5.7
 
-Use the simulator to test the machines you designed in *Note [[../5.1_Designing_Register_Machines/5.4.org][Exercise 5-4]].
+Use the simulator to test the machines you designed in [[../5.1_Designing_Register_Machines/5.4.org][Exercise 5-4]].
 
 Since the machine model has not been introduced yet, I will only be able to write the definition here and won't be able to run it. It's a similar case to the amb eval section of chapter 4 where the book requires the completion of exercises without yet introducing the evaluator and aknowledges about this. Not sure what's the best way to approach this. Anyway, maybe I'll run it when I'm done implementing 5.2.1 The Machine Model.
 
+Update: I found some issues in the machine code while running it in the simulator and corrected those.
+The most important error and learning lesson I got was in the order of save and restore. Since it's a stack, the order in which a register is saved and restored should be respected, since the stack procedure does not know which register name it's working with. 
+
+The book does mention about this issue.
+#+BEGIN_SRC scheme :session 5-7 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+#+END_SRC
+
 *  a. Recursive exponentiation:
-#+BEGIN_SRC scheme :eval no
+#+BEGIN_SRC scheme :session 5-7 :exports both
   (define recursive-expt
     (make-machine
-     '(b n val)
+     '(b n val continue)
      (list (list '= =)
            (list '- -)
            (list '* *))
@@ -24,8 +34,8 @@ Since the machine model has not been introduced yet, I will only be able to writ
        (goto (label expt-loop))
 
        after-expt
-       (restore continue)
        (restore n)
+       (restore continue)
        (assign val (op *) (reg b) (reg val))
        (goto (reg continue))
 
@@ -37,11 +47,14 @@ Since the machine model has not been introduced yet, I will only be able to writ
   (set-register-contents! recursive-expt 'b 2)
   (set-register-contents! recursive-expt 'n 3)
   (start recursive-expt)
-  (get-register-contents! recursive-expt 'val)
+  (get-register-contents recursive-expt 'val)
 #+END_SRC
 
+#+RESULTS:
+: 8
+
 *  b. Iterative exponentiation:
-#+BEGIN_SRC scheme :eval no
+#+BEGIN_SRC scheme :session 5-7 :exports both
   (define iter-expt
     (make-machine
      '(counter product b n)
@@ -51,9 +64,9 @@ Since the machine model has not been introduced yet, I will only be able to writ
      '((assign product (const 1))
        (assign counter (reg n))
 
-       exp-iter
+       expt-iter
        (test (op =) (reg counter) (const 0))
-       (branch expt-done)
+       (branch (label expt-done))
        (assign counter (op -) (reg counter) (const 1))
        (assign product (op *) (reg b) (reg product))
        (goto (label expt-iter))
@@ -63,6 +76,9 @@ Since the machine model has not been introduced yet, I will only be able to writ
     (set-register-contents! iter-expt 'b 2)
     (set-register-contents! iter-expt 'n 3)
     (start iter-expt)
-    (get-register-contents! iter-expt 'product)
+    (get-register-contents iter-expt 'product)
 
 #+END_SRC
+
+#+RESULTS:
+: 8

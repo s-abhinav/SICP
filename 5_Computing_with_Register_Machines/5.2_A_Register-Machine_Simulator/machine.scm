@@ -119,7 +119,7 @@
   (set-contents! (get-register machine register-name) value)
   'done)
 
-(define (update-inst! insts labels machine)
+(define (update-insts! insts labels machine)
   (let ((pc (get-register machine 'pc))
 	(flag (get-register machine 'flag))
 	(stack (machine 'stack))
