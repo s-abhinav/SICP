@@ -1,0 +1,184 @@
+#+Title: Exercise 5.10
+Design a new syntax for register-machine instructions and modify the simulator to use your new syntax. Can you implement your new syntax without changing any part of the simulator except the syntax procedures in this section?
+
+Maybe adding a loop instruction will be interesting.
+Let's say that we want to loop a set of instructions until a condition is satisfied, such as a while loop. We could have this syntax:
+
+#+BEGIN_SRC scheme :eval no
+  (define while-loop
+    (make-machine
+     '(a n)
+     (list (list '< <)
+           (list '+ +)
+           (list '* *))
+
+     '((while (op <) (reg n) (const 10))
+       (assign n (op +) (reg n) (const 1))
+       (assign a (op *) (reg n) (const 2))
+       end-while)))
+#+END_SRC
+
+This input source should get transformed into
+
+#+BEGIN_SRC scheme :eval no
+  (define while-loop
+    (make-machine
+     '(a n)
+     (list (list '< <)
+           (list '+ +)
+           (list '* *))
+
+     '(while-gensym
+       (unless (op <) (reg n) (const 10))
+       (branch (label end-while-gensym))
+       (assign n (op +) (reg n) (const 1))
+       (assign a (op *) (reg n) (const 2))
+       (goto (label while-gensym))
+       end-while-gensym)))
+#+END_SRC
+
+There's an interesting point to note here. At the level of the programmer, the while syntax should work, no matter the number of while / end-while pairs, as well as nested while loops.
+
+* Description of how the simulator should process this.
+1. When intercepting the while syntax, the simulator should setup:
+   1. a while label 
+   2. test (since we are testing for not, we'll use the unless syntax here)
+   3. and branching instructions
+
+2. When the while loop condition is satisfied, it should continue executing the instructions, advancing the program counter.
+3. When the while loop condition fails, the simulator should jump to end-while and advance pc as from there. 
+
+* Nested while case
+1. The language should also be able to contain several while blocks as well as be able to have nested while loops.
+
+When the simulator compiles the program 
+1. It should generate a unique symbol (gensym) for while, then save it in the stack.
+2. If if encounters another while (nested), repeat 1.
+3. If it encounters an end-while, it should restore the stack, then use this as a goto to escape the current while loop when the current while loop condition fails.
+
+* Tests
+Let's do some tests
+#+BEGIN_SRC scheme :session 5-10 :exports none :results output silent
+  (use-modules (ice-9 pretty-print))
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+#+END_SRC
+
+** Syntax transformation tests
+*** Single while
+#+BEGIN_SRC scheme :session 5-10 :exports both :results output code
+    (define single-while-loop-controller-text
+      '((while (op <) (reg n) (const 10))
+        (assign n (op +) (reg n) (const 1))
+        (assign a (op *) (reg n) (const 2))
+        end-while))
+
+  (pretty-print (transform-syntax single-while-loop-controller-text))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(#{while g1664}#
+  (unless (op <) (reg n) (const 10))
+  (branch (label #{end-while g1664}#))
+  (assign n (op +) (reg n) (const 1))
+  (assign a (op *) (reg n) (const 2))
+  (goto (label #{while g1664}#))
+  #{end-while g1664}#)
+#+END_SRC
+
+The single while transformation is behaving as expected.
+How about nested whiles?
+
+*** Nested while
+#+BEGIN_SRC scheme :session 5-10 :exports both :results output code
+  (define nested-while-loop-controller-text
+    '((while (op <) (reg n) (const 9))
+      (assign n (op +) (reg n) (const 1))
+      (assign x (const 0))
+      (while (op <) (reg x) (const 7))
+      (assign x (op +) (reg x) (const 1))
+      (assign a (op +) (reg a) (const 1))
+      end-while
+      end-while)
+    )
+
+  (pretty-print (transform-syntax nested-while-loop-controller-text))
+#+END_SRC
+
+#+RESULTS:
+#+BEGIN_SRC scheme
+(#{while g14199}#
+  (unless (op <) (reg n) (const 9))
+  (branch (label #{end-while g14199}#))
+  (assign n (op +) (reg n) (const 1))
+  (assign x (const 0))
+  #{while g14200}#
+  (unless (op <) (reg x) (const 7))
+  (branch (label #{end-while g14200}#))
+  (assign x (op +) (reg x) (const 1))
+  (assign a (op +) (reg a) (const 1))
+  (goto (label #{while g14200}#))
+  #{end-while g14200}#
+  (goto (label #{while g14199}#))
+  #{end-while g14199}#)
+#+END_SRC
+
+- gensyms are working as expected.
+- nested while blocks have their correct labels assigned with the right gensyms.
+
+Let's give those two machines a spin.
+
+** Simulator test
+*** Single while
+#+BEGIN_SRC scheme :session 5-10 :exports both
+  (define while-loop
+    (make-machine
+     '(a n)
+     (list (list '< <)
+           (list '+ +)
+           (list '* *))
+
+     '((while (op <) (reg n) (const 10))
+       (assign n (op +) (reg n) (const 1))
+       (assign a (op *) (reg n) (const 2))
+       end-while)))
+
+  (set-register-contents! while-loop 'a 1)
+  (set-register-contents! while-loop 'n 1)
+  (start while-loop)
+  (get-register-contents while-loop 'n)
+#+END_SRC
+
+#+RESULTS:
+: 10
+
+This is working as expected.
+
+*** Nested while
+#+BEGIN_SRC scheme :session 5-10 :exports both
+  (define nested-while-loop
+    (make-machine
+     '(a n x)
+     (list (list '< <)
+           (list '+ +)
+           (list '* *))
+
+     '((while (op <) (reg n) (const 9))
+      (assign n (op +) (reg n) (const 1))
+      (assign x (const 0))
+      (while (op <) (reg x) (const 7))
+      (assign x (op +) (reg x) (const 1))
+      (assign a (op +) (reg a) (const 1))
+      end-while
+      end-while)))
+
+  (set-register-contents! nested-while-loop 'a 0)
+  (set-register-contents! nested-while-loop 'n 0)
+  (start nested-while-loop)
+  (get-register-contents nested-while-loop 'a)
+#+END_SRC
+
+#+RESULTS:
+: 63

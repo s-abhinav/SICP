@@ -134,10 +134,20 @@
 
 (define (assemble controller-text machine)
   (extract-labels
-   controller-text
+   (transform-syntax controller-text)
    (lambda (insts labels)
      (update-insts! insts labels machine)
      insts)))
+
+(define (transform-syntax controller-text)
+  (cond ((null? controller-text) '())
+	((tagged-list? (car controller-text) 'while)
+	 (append (while->machine (car controller-text))
+		 (transform-syntax (cdr controller-text))))
+	((eq? (car controller-text) 'end-while)
+	 (append (end-while->machine)
+		 (transform-syntax (cdr controller-text))))
+	(else (append (list (car controller-text)) (transform-syntax (cdr controller-text))))))
 
 (define (make-label-entry label-name insts)
   (cons label-name insts))
@@ -159,7 +169,6 @@
                    (cons (make-instruction next-inst) insts)
                    labels)))))))
 
-
 (define (lookup-label labels label-name)
   (let ((val (assoc label-name labels)))
     (if val
@@ -171,6 +180,8 @@
 	 (make-assign inst machine labels ops pc))
 	((eq? (car inst) 'test)
 	 (make-test inst machine labels ops flag pc))
+	((eq? (car inst) 'unless)
+	 (make-unless inst machine labels ops flag pc))
 	((eq? (car inst) 'branch)
 	 (make-branch inst machine labels flag pc))
 	((eq? (car inst) 'goto)
@@ -183,6 +194,58 @@
 	 (make-perform inst machine labels ops pc))
 	(else
 	 (error "Unknown instruction type -- ASSEMBLE" inst))))
+
+(define (while-gensym-stack)
+  (define stack '())
+  (define (push)
+    (set! stack (cons (gensym) stack))
+    (car stack))
+  (define (pop)
+    (if (null? stack)
+	(error "Empty stack: most probably bad syntax -- while-gensym-stack")
+	(let ((top (car stack)))
+	  (set! stack (cdr stack))
+	  top)))
+  (define (get)
+    (if (null? stack)
+	(error "Empty stack: most probably bad syntax -- while-gensym-stack")
+	 (car stack)))
+  (lambda (m)
+    (cond ((eq? m 'push) (push))
+	  ((eq? m 'pop) (pop))
+	  ((eq? m 'get) (get))
+	  (else (error "Unknown operation -- while-gensym-stack" m)))))
+
+(define (get-while-gensym-stack)
+  (define the-stack (while-gensym-stack))
+  (lambda () the-stack))
+
+(define machine-while-gensym-stack
+  (get-while-gensym-stack))
+
+(define (push-while)
+  ((machine-while-gensym-stack) 'push))
+
+(define (pop-while)
+  ((machine-while-gensym-stack) 'pop))
+
+(define (make-while)
+  (symbol-append 'while ((machine-while-gensym-stack) 'get)))
+
+(define (make-end-while)
+  (symbol-append 'end-while ((machine-while-gensym-stack) 'get)))
+
+(define (while->machine text)
+  (push-while)
+  (list (make-while)
+	(append (list 'unless) (cdr text))
+	(list 'branch (list 'label (make-end-while)))))
+
+(define (end-while->machine)
+  (let ((expr (list (list 'goto (list 'label (make-while)))
+		    (make-end-while))))
+    (pop-while)
+    expr))
 
 (define (make-assign inst machine labels operations pc)
   (let ((target (get-register machine (assign-reg-name inst)))
@@ -216,6 +279,17 @@
 	    (set-contents! flag (condition-proc))
 	    (advance-pc pc)))
 	(error "Bad TEST instruction -- ASSEMBLE" inst))))
+
+(define (make-unless inst machine labels operations flag pc)
+  (let ((condition (test-condition inst)))
+    (if (operation-exp? condition)
+	(let ((condition-proc
+	       (make-operation-exp
+		condition machine labels operations)))
+	  (lambda ()
+	    (set-contents! flag (not (condition-proc)))
+	    (advance-pc pc)))
+	(error "Bad UNLESS instruction -- ASSEMBLE" inst))))
 
 (define (test-condition test-instruction)
   (cdr test-instruction))
