@@ -1,0 +1,194 @@
+#+Title: Exercise 5.11
+When we introduced ~save~ and ~restore~ in section 5-1-4::, we didn't specify what would happen if you tried to restore a register that was not the last one saved, as in the sequence
+
+#+BEGIN_SRC scheme :eval no
+  (save y)
+  (save x)
+  (restore y)
+#+END_SRC
+
+#+BEGIN_SRC scheme :session 5-11 :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+#+END_SRC
+
+
+**** There are several reasonable possibilities for the meaning of ~restore~:
+
+***** a.
+~(restore y)~ puts into ~y~ the last value saved on the stack,
+regardless of what register that value came from.  This is
+the way our simulator behaves.  Show how to take advantage of
+this behavior to eliminate one instruction from the Fibonacci
+machine of section 5-1-4:: (Figure 5-12::).
+
+We can see in afterfib-n-2 that the register val is used twice.
+One from the actual value of val, and the second from the last value in the stack. This can be noted in the + operation to compute a new value of val.
++ val n
+
+In the book version, n is assigned the current value of val, then val is restored.
+We can avoid doing the assignment of n to the current value of val and not restore val from the stack into val.
+
+(assign n (reg val)) can become (restore n), which would restore val from the stack into n.
+And (restore val) can be removed from the instruction, effectively achieving the goal of this part of Exercise 5.11
+
+Before this we test the optimization, let's do a test run of the version from the book.
+
+
+****** Test Figure 5.12
+#+BEGIN_SRC scheme :session 5-11 :exports both
+  (define fib
+    (make-machine
+     '(n val continue)
+     (list (list '< <)
+            (list '- -)
+            (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (assign n (reg val))
+       (restore val)
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib 'n 8)
+  (start fib)
+  (get-register-contents fib 'val)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+This is obviously working as expected. Time to test the optimized version.
+
+****** Optimized version of fib, by removing one instruction.
+
+#+BEGIN_SRC scheme :session 5-11 :exports both
+  (define fib-optimized
+    (make-machine
+     '(n val continue)
+     (list (list '< <)
+            (list '- -)
+            (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (restore n) ; changed from (assign n (reg val))
+       ; (restore val) removed
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib-optimized 'n 8)
+  (start fib-optimized)
+  (get-register-contents fib-optimized 'val)
+#+END_SRC
+
+#+RESULTS:
+:
+***** b.
+~(restore y)~ puts into ~y~ the last value saved on the
+stack, but only if that value was saved from ~y~; otherwise,
+it signals an error.  Modify the simulator to behave this
+way.  You will have to change ~save~ to put the register name
+on the stack along with the value.
+
+****** Let's make sure the change is not introducing any regression.
+The fib version in the book should work as expected.
+#+BEGIN_SRC scheme :session 5-11 :exports both
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm") ; load machine again. This is making part a. obsolete.
+
+  (define fib
+    (make-machine
+     '(n val continue)
+     (list (list '< <)
+            (list '- -)
+            (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (assign n (reg val))
+       (restore val)
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib 'n 8)
+  (start fib)
+
+  (get-register-contents fib 'val)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+***** c.
+~(restore y)~ puts into ~y~ the last value saved from ~y~
+regardless of what other registers were saved after ~y~ and
+not restored.  Modify the simulator to behave this way.  You
+will have to associate a separate stack with each register.
+You should make the ~initialize-stack~ operation initialize
+all the register stacks.

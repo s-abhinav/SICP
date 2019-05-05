@@ -342,15 +342,12 @@
 (define (make-restore inst machine stack pc)
   (let ((reg (get-register machine (stack-inst-reg-name inst))))
     (lambda ()
-      (let* ((top (pop stack))
-             (restore-to-register (stack-inst-reg-name inst))
-             (restore-from-register (car top)))
+      (let* ((restore-to-register (stack-inst-reg-name inst))
+             (restore-from-register (car (top stack))))
         (if (not (eq? restore-from-register restore-to-register))
+            (error "Invalid restore operation: " restore-from-register '-> restore-to-register)
             (begin
-              (push stack top) ;TODO use let and don't push back;
-              (error "Invalid restore operation: " restore-from-register '-> restore-to-register))
-            (begin
-              (set-contents! reg (cdr top))
+              (set-contents! reg (cdr (pop stack)))
               (advance-pc pc)))))))
 
 (define (stack-inst-reg-name stack-instruction)
