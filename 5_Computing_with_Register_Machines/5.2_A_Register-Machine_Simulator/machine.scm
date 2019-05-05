@@ -24,12 +24,15 @@
           (let ((top (car s)))
             (set! s (cdr s))
             top)))
+    (define (top)
+      (car s))
     (define (initialize)
       (set! s '())
       'done)
     (define (dispatch message)
       (cond ((eq? message 'push) push)
             ((eq? message 'pop) (pop))
+            ((eq? message 'top) (top))
             ((eq? message 'initialize) (initialize))
             (else (error "Unknown request -- STACK" message))))
     dispatch))
@@ -39,6 +42,9 @@
 
 (define (push stack value)
   ((stack 'push) value))
+
+(define (top stack)
+  (stack 'top))
 
 (define (make-instruction text)
   (cons text '()))
@@ -330,14 +336,22 @@
 (define (make-save inst machine stack pc)
   (let ((reg (get-register machine (stack-inst-reg-name inst))))
     (lambda ()
-      (push stack (get-contents reg))
+      (push stack (cons (stack-inst-reg-name inst) (get-contents reg)))
       (advance-pc pc))))
 
 (define (make-restore inst machine stack pc)
   (let ((reg (get-register machine (stack-inst-reg-name inst))))
     (lambda ()
-      (set-contents! reg (pop stack))
-      (advance-pc pc))))
+      (let* ((top (pop stack))
+             (restore-to-register (stack-inst-reg-name inst))
+             (restore-from-register (car top)))
+        (if (not (eq? restore-from-register restore-to-register))
+            (begin
+              (push stack top) ;TODO use let and don't push back;
+              (error "Invalid restore operation: " restore-from-register '-> restore-to-register))
+            (begin
+              (set-contents! reg (cdr top))
+              (advance-pc pc)))))))
 
 (define (stack-inst-reg-name stack-instruction)
   (cadr stack-instruction))
