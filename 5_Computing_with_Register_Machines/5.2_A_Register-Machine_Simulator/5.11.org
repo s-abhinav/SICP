@@ -185,6 +185,55 @@ The fib version in the book should work as expected.
 #+RESULTS:
 : 21
 
+This validates that the updated version of make-restore has not introduced regression in existing behavior. Time to test the optimized version of part a on this version of make-restore.
+
+****** Verify the incompatible register restore check.
+We are expecting that machine throws an error since we are trying to restore val register into n.
+#+BEGIN_SRC scheme :session 5-11 :exports both :output raw
+    (define fib-optimized
+      (make-machine
+       '(n val continue)
+       (list (list '< <)
+              (list '- -)
+              (list '+ +))
+       '((assign continue (label fib-done))
+         fib-loop
+         (test (op <) (reg n) (const 2))
+         (branch (label immediate-answer))
+         (save continue)
+         (assign continue (label afterfib-n-1))
+         (save n)
+         (assign n (op -) (reg n) (const 1))
+         (goto (label fib-loop))
+         afterfib-n-1
+         (restore n)
+         (restore continue)
+         (assign n (op -) (reg n) (const 2))
+         (save continue)
+         (assign continue (label afterfib-n-2))
+         (save val)
+         (goto (label fib-loop))
+         afterfib-n-2
+         (restore n) ; changed from (assign n (reg val))
+         ; (restore val) removed
+         (restore continue)
+         (assign val
+                 (op +) (reg val) (reg n))
+         (goto (reg continue))
+         immediate-answer
+         (assign val (reg n))
+         (goto (reg continue))
+         fib-done)))
+
+    (set-register-contents! fib-optimized 'n 8)
+    (start fib-optimized)
+    (get-register-contents fib-optimized 'val)
+#+END_SRC
+
+#+RESULTS: Invalid restore operation:  val -> n
+
+I don't know how to capture the error output in org's result, so I copy/pasted the Guile's output here.
+
 ***** c.
 ~(restore y)~ puts into ~y~ the last value saved from ~y~
 regardless of what other registers were saved after ~y~ and
