@@ -23,6 +23,7 @@
            (lambda (register)
              (let ((stack (make-stack)))
                (stack 'initialize)
+               ((stack 'name) (car register))
                (set! stack-table
                  (cons
                   (cons (car register) stack)
@@ -45,12 +46,13 @@
     dispatch))
 
 (define (make-stack)
-  (let ((s '()))
+  (let ((s '())
+        (name '()))
     (define (push x)
       (set! s (cons x s)))
     (define (pop)
       (if (null? s)
-          (error "Empty stack -- POP")
+          (error "Empty stack -- POP" name)
           (let ((top (car s)))
             (set! s (cdr s))
             top)))
@@ -63,6 +65,7 @@
       (cond ((eq? message 'push) push)
             ((eq? message 'pop) (pop))
             ((eq? message 'top) (top))
+            ((eq? message 'name) (lambda (x) (set! name x)))
             ((eq? message 'initialize) (initialize))
             (else (error "Unknown request -- STACK" message))))
     dispatch))
