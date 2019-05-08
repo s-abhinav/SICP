@@ -236,3 +236,104 @@ I don't know how to capture the error output in org's result, so I copy/pasted t
 
 ***** c.
 ~(restore y)~ puts into ~y~ the last value saved from ~y~ regardless of what other registers were saved after ~y~ and not restored. Modify the simulator to behave this way. You will have to associate a separate stack with each register. You should make the ~initialize-stack~ operation initialize all the register stacks.
+
+
+Test the books version.
+#+BEGIN_SRC scheme :session 5-11 :exports both
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fib
+    (make-machine
+     '(n val continue)
+     (list (list '< <)
+            (list '- -)
+            (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (assign n (reg val))
+       (restore val)
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib 'n 8)
+  (start fib)
+
+  (get-register-contents fib 'val)
+#+END_SRC
+
+#+RESULTS:
+: 21
+
+Working as expected.
+
+
+The optimized version of fib from part a should throw an error with this version of machine, since the stack count would have a mismatch
+#+BEGIN_SRC scheme :session 5-11 :exports both
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fib-optimized
+    (make-machine
+     '(n val continue)
+     (list (list '< <)
+           (list '- -)
+           (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (restore n) ; changed from (assign n (reg val))
+                                          ; (restore val) removed
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib-optimized 'n 8)
+  (start fib-optimized)
+  (get-register-contents fib-optimized 'val)
+#+END_SRC
+
+#+RESULTS:
+Empty stack -- POP n
