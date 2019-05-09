@@ -7,11 +7,6 @@ When we introduced ~save~ and ~restore~ in section 5-1-4::, we didn't specify wh
   (restore y)
 #+END_SRC
 
-#+BEGIN_SRC scheme :session 5-11 :exports none :results output silent
-  (add-to-load-path (dirname "./"))
-
-  (load "./machine.scm")
-#+END_SRC
 
 
 **** There are several reasonable possibilities for the meaning of ~restore~:
@@ -33,11 +28,106 @@ We can avoid doing the assignment of n to the current value of val and not resto
 (assign n (reg val)) can become (restore n), which would restore val from the stack into n.
 And (restore val) can be removed from the instruction, effectively achieving the goal of this part of Exercise 5.11
 
-Before this we test the optimization, let's do a test run of the version from the book.
+Before we test the optimization, let's do a test run of the version from the book.
 
+#+BEGIN_SRC scheme :session 5-11a :exports none :results output silent
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+#+END_SRC
+
+****** Use the book's procedure versions to test the following code...
+since part b and c will be modifying some procedures which will break part a.
+#+BEGIN_SRC scheme :session 5-11a :exports none :results output silent
+  (define (make-stack)
+    (let ((s '()))
+      (define (push x)
+        (set! s (cons x s)))
+      (define (pop)
+        (if (null? s)
+            (error "Empty stack -- POP")
+            (let ((top (car s)))
+              (set! s (cdr s))
+              top)))
+      (define (initialize)
+        (set! s '())
+        'done)
+      (define (dispatch message)
+        (cond ((eq? message 'push) push)
+              ((eq? message 'pop) (pop))
+              ((eq? message 'initialize) (initialize))
+              (else (error "Unknown request -- STACK" message))))
+      dispatch))
+
+  (define (make-machine register-names ops controller-text)
+    (let ((machine (make-new-machine)))
+      (for-each (lambda (register-name)
+                  ((machine 'allocate-register) register-name))
+                register-names)
+      ((machine 'install-operations) ops)
+      ((machine 'install-instruction-sequence)
+       (assemble controller-text machine))
+      machine))
+
+  (define (make-new-machine)
+    (let ((pc (make-register 'pc))
+          (flag (make-register 'flag))
+          (stack (make-stack))
+          (the-instruction-sequence '()))
+      (let ((the-ops
+             (list (list 'initialize-stack
+                         (lambda () (stack 'initialize)))))
+            (register-table
+             (list (list 'pc pc) (list 'flag flag))))
+        (define (allocate-register name)
+          (if (assoc name register-table)
+              (error "Multiple defined register: " name)
+              (set! register-table
+                (cons (list name (make-register name))
+                      register-table)))
+          'register-allocated)
+        (define (lookup-register name)
+          (let ((val (assoc name register-table)))
+            (if val
+                (cadr val)
+                (error "Unknown register: " name))))
+        (define (execute)
+          (let ((insts (get-contents pc)))
+            (if (null? insts)
+                'done
+                (begin
+                  ((instruction-execution-proc (car insts)))
+                  (execute)))))
+        (define (dispatch message)
+          (cond ((eq? message 'start)
+                 (set-contents! pc the-instruction-sequence)
+                 (execute))
+                ((eq? message 'install-instruction-sequence)
+                 (lambda (seq) (set! the-instruction-sequence seq)))
+                ((eq? message 'allocate-register) allocate-register)
+                ((eq? message 'get-register) lookup-register)
+                ((eq? message 'install-operations)
+                 (lambda (ops) (set! the-ops (append the-ops ops))))
+                ((eq? message 'stack) stack)
+                ((eq? message 'operations) the-ops)
+                (else (error "Unknown request -- MACHINE: " message))))
+        dispatch)))
+
+  (define (make-save inst machine stack pc)
+    (let ((reg (get-register machine (stack-inst-reg-name inst))))
+      (lambda ()
+        (push stack (get-contents reg))
+        (advance-pc pc))))
+
+  (define (make-restore inst machine stack pc)
+    (let ((reg (get-register machine (stack-inst-reg-name inst))))
+      (lambda ()
+        (set-contents! reg (pop stack))
+        (advance-pc pc))))
+#+END_SRC
 
 ****** Test Figure 5.12
-#+BEGIN_SRC scheme :session 5-11 :exports both
+#+BEGIN_SRC scheme :session 5-11a :exports both
   (define fib
     (make-machine
      '(n val continue)
@@ -85,7 +175,7 @@ This is obviously working as expected. Time to test the optimized version.
 
 ****** Optimized version of fib, by removing one instruction.
 
-#+BEGIN_SRC scheme :session 5-11 :exports both
+#+BEGIN_SRC scheme :session 5-11a :exports both
   (define fib-optimized
     (make-machine
      '(n val continue)
@@ -127,7 +217,8 @@ This is obviously working as expected. Time to test the optimized version.
 #+END_SRC
 
 #+RESULTS:
-:
+: 21
+
 ***** b.
 ~(restore y)~ puts into ~y~ the last value saved on the
 stack, but only if that value was saved from ~y~; otherwise,
@@ -137,9 +228,106 @@ on the stack along with the value.
 
 ****** Let's make sure the change is not introducing any regression.
 The fib version in the book should work as expected.
-#+BEGIN_SRC scheme :session 5-11 :exports both
+#+BEGIN_SRC scheme :session 5-11b :exports both
   (add-to-load-path (dirname "./"))
   (load "./machine.scm") ; load machine again. This is making part a. obsolete.
+
+  (define (make-stack)
+    (let ((s '()))
+      (define (push x)
+        (set! s (cons x s)))
+      (define (pop)
+        (if (null? s)
+            (error "Empty stack -- POP")
+            (let ((top (car s)))
+              (set! s (cdr s))
+              top)))
+      (define (top)
+        (car s))
+      (define (initialize)
+        (set! s '())
+        'done)
+      (define (dispatch message)
+        (cond ((eq? message 'push) push)
+              ((eq? message 'pop) (pop))
+              ((eq? message 'top) (top))
+              ((eq? message 'initialize) (initialize))
+              (else (error "Unknown request -- STACK" message))))
+      dispatch))
+
+  (define (top stack)
+    (stack 'top))
+
+  (define (make-machine register-names ops controller-text)
+    (let ((machine (make-new-machine)))
+      (for-each (lambda (register-name)
+                  ((machine 'allocate-register) register-name))
+                register-names)
+      ((machine 'install-operations) ops)
+      ((machine 'install-instruction-sequence)
+       (assemble controller-text machine))
+      machine))
+
+  (define (make-new-machine)
+    (let ((pc (make-register 'pc))
+          (flag (make-register 'flag))
+          (stack (make-stack))
+          (the-instruction-sequence '()))
+      (let ((the-ops
+             (list (list 'initialize-stack
+                         (lambda () (stack 'initialize)))))
+            (register-table
+             (list (list 'pc pc) (list 'flag flag))))
+        (define (allocate-register name)
+          (if (assoc name register-table)
+              (error "Multiple defined register: " name)
+              (set! register-table
+                (cons (list name (make-register name))
+                      register-table)))
+          'register-allocated)
+        (define (lookup-register name)
+          (let ((val (assoc name register-table)))
+            (if val
+                (cadr val)
+                (error "Unknown register: " name))))
+        (define (execute)
+          (let ((insts (get-contents pc)))
+            (if (null? insts)
+                'done
+                (begin
+                  ((instruction-execution-proc (car insts)))
+                  (execute)))))
+        (define (dispatch message)
+          (cond ((eq? message 'start)
+                 (set-contents! pc the-instruction-sequence)
+                 (execute))
+                ((eq? message 'install-instruction-sequence)
+                 (lambda (seq) (set! the-instruction-sequence seq)))
+                ((eq? message 'allocate-register) allocate-register)
+                ((eq? message 'get-register) lookup-register)
+                ((eq? message 'install-operations)
+                 (lambda (ops) (set! the-ops (append the-ops ops))))
+                ((eq? message 'stack) stack)
+                ((eq? message 'operations) the-ops)
+                (else (error "Unknown request -- MACHINE: " message))))
+        dispatch)))
+
+  (define (make-save inst machine stack pc)
+    (let ((reg (get-register machine (stack-inst-reg-name inst))))
+      (lambda ()
+        (push stack (cons (stack-inst-reg-name inst) (get-contents reg)))
+        (advance-pc pc))))
+
+  (define (make-restore inst machine stack pc)
+    (let ((reg (get-register machine (stack-inst-reg-name inst))))
+      (lambda ()
+        (let* ((restore-to-register (stack-inst-reg-name inst))
+               (restore-from-register (car (top stack))))
+          (if (not (eq? restore-from-register restore-to-register))
+              (error "Invalid restore operation: " restore-from-register '-> restore-to-register)
+              (begin
+                (set-contents! reg (cdr (pop stack)))
+                (advance-pc pc)))))))
 
   (define fib
     (make-machine
@@ -188,8 +376,8 @@ The fib version in the book should work as expected.
 This validates that the updated version of make-restore has not introduced regression in existing behavior. Time to test the optimized version of part a on this version of make-restore.
 
 ****** Verify the incompatible register restore check.
-We are expecting that machine throws an error since we are trying to restore val register into n.
-#+BEGIN_SRC scheme :session 5-11 :exports both :output raw
+We are expecting that machine throws an error since we are trying to restore the val register into n.
+#+BEGIN_SRC scheme :session 5-11b :exports both :output raw
     (define fib-optimized
       (make-machine
        '(n val continue)
@@ -232,13 +420,12 @@ We are expecting that machine throws an error since we are trying to restore val
 
 #+RESULTS: Invalid restore operation:  val -> n
 
-I don't know how to capture the error output in org's result, so I copy/pasted the Guile's output here.
+I don't know how to capture the error output in org's result, so I copy/pasted Guile's output here.
 
 ***** c.
 ~(restore y)~ puts into ~y~ the last value saved from ~y~ regardless of what other registers were saved after ~y~ and not restored. Modify the simulator to behave this way. You will have to associate a separate stack with each register. You should make the ~initialize-stack~ operation initialize all the register stacks.
 
-
-Test the books version.
+Test the book's version.
 #+BEGIN_SRC scheme :session 5-11 :exports both
   (add-to-load-path (dirname "./"))
   (load "./machine.scm")
@@ -289,7 +476,6 @@ Test the books version.
 
 Working as expected.
 
-
 The optimized version of fib from part a should throw an error with this version of machine, since the stack count would have a mismatch
 #+BEGIN_SRC scheme :session 5-11 :exports both
   (add-to-load-path (dirname "./"))
@@ -336,4 +522,4 @@ The optimized version of fib from part a should throw an error with this version
 #+END_SRC
 
 #+RESULTS:
-Empty stack -- POP n
+: Empty stack -- POP n
