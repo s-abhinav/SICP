@@ -1,0 +1,55 @@
+#+Title: Exercise 5.12
+
+The simulator can be used to help determine the data paths required for implementing a machine with a given controller. Extend the assembler to store the following information in the machine model:
+
+The procedures for this exercise are in machine-stat in machine.scm
+
+Load some machines like fib.
+#+BEGIN_SRC scheme :session 5-12 :exports code
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+  (load "./some-machines.scm")
+#+END_SRC
+
+#+RESULTS:
+: #<unspecified>
+
+**** a list of all instructions, with duplicates removed, sorted by instruction type (~assign~, ~goto~, and so on);
+#+BEGIN_SRC scheme :session 5-12 :exports both
+  ((fib 'stat) 'instructions-sorted)
+#+END_SRC
+
+#+RESULTS:
+| assign | branch | goto | restore | save | test |
+
+**** a list (without duplicates) of the registers used to hold entry points (these are the registers referenced by ~goto~ instructions);
+#+BEGIN_SRC scheme :session 5-12 :exports both
+  ((fib 'stat) 'entry-points)
+#+END_SRC
+
+#+RESULTS:
+| continue |
+
+**** a list (without duplicates) of the registers that are ~save'd~ or ~restore'd~;
+#+BEGIN_SRC scheme :session 5-12 :exports both
+((fib 'stat) 'stack-operations)
+#+END_SRC
+
+#+RESULTS:
+| continue | n | val |
+
+**** for each register, a list (without duplicates) of the sources from which it is assigned (for example, the sources for register ~val~ in the factorial machine of *Note Figure 5-11:: are ~(const 1)~ and ~((op *) (reg n) (reg val))~).
+#+BEGIN_SRC scheme :session 5-12 :exports both
+  ((fib 'stat) 'assign-sources)
+#+END_SRC
+
+#+RESULTS:
+| continue | (label fib-done)     |           |           |
+| continue | (label afterfib-n-1) |           |           |
+| continue | (label afterfib-n-2) |           |           |
+| n        | (op -)               | (reg n)   | (const 1) |
+| n        | (op -)               | (reg n)   | (const 2) |
+| n        | (reg val)            |           |           |
+| val      | (op +)               | (reg val) | (reg n)   |
+| val      | (reg n)              |           |           |
