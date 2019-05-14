@@ -1,0 +1,54 @@
+#+Title: Exercise 5.13
+Modify the simulator so that it uses the controller sequence to determine what registers the machine has rather than requiring a list of registers as an argument to ~make-machine~. Instead of pre-allocating the registers in ~make-machine~, you can allocate them one at a time when they are first seen during assembly of the instructions.
+
+The same process will be applied to each register's stack.
+Since the stack creation was dependent on the list of allocated registers upfront, this new change in register allocation breaks the stack creation. Now, the stack will also created as the machine code is assembled. See make-stack-table, make-machine and make-new-machine 'lookup-register in machine.scm.
+
+#+BEGIN_SRC scheme :session 5-13 :exports both
+  (add-to-load-path (dirname "./"))
+
+  (load "./machine.scm")
+
+  (define fib
+    (make-machine
+     '() ;; backwards compatible.
+     (list (list '< <)
+           (list '- -)
+           (list '+ +))
+     '((assign continue (label fib-done))
+       fib-loop
+       (test (op <) (reg n) (const 2))
+       (branch (label immediate-answer))
+       (save continue)
+       (assign continue (label afterfib-n-1))
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (goto (label fib-loop))
+       afterfib-n-1
+       (restore n)
+       (restore continue)
+       (assign n (op -) (reg n) (const 2))
+       (save continue)
+       (assign continue (label afterfib-n-2))
+       (save val)
+       (goto (label fib-loop))
+       afterfib-n-2
+       (assign n (reg val))
+       (restore val)
+       (restore continue)
+       (assign val
+               (op +) (reg val) (reg n))
+       (goto (reg continue))
+       immediate-answer
+       (assign val (reg n))
+       (goto (reg continue))
+       fib-done)))
+
+  (set-register-contents! fib 'n 8)
+  (start fib)
+
+  (get-register-contents fib 'val)
+#+END_SRC
+
+#+RESULTS:
+: 21

@@ -35,7 +35,14 @@
       (let ((val (assoc name stack-table)))
         (if val
             (cdr val)
-            (error "Unknown stack: " name))))
+            (let ((stack (make-stack)))
+              (stack 'initialize)
+              ((stack 'name) name)
+              (set! stack-table
+                    (cons
+                     (cons name stack)
+                     stack-table))
+              (lookup-stack name)))))
     (define (dispatch m)
       (cond ((eq? m 'set-machine)
              (lambda (x) (set! machine x)))
@@ -96,9 +103,9 @@
     (for-each (lambda (register-name)
                 ((machine 'allocate-register) register-name))
               register-names)
+    ((machine 'install-operations) ops)
     (((machine 'stack) 'set-machine) machine)
     ((machine 'stack) 'initialize)
-    ((machine 'install-operations) ops)
     ((machine 'install-instruction-sequence)
      (assemble controller-text machine))
     machine))
@@ -122,7 +129,9 @@
         (let ((val (assoc name register-table)))
           (if val
               (cadr val)
-              (error "Unknown register: " name))))
+              (begin
+                (allocate-register name)
+                (lookup-register name)))))
       (define (execute)
         (let ((insts (get-contents pc)))
           (if (null? insts)
