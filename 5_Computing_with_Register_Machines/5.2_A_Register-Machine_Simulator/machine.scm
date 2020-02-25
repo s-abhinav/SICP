@@ -132,7 +132,8 @@
         (flag (make-register 'flag))
         (stack-table (make-stack-table))
         (the-instruction-sequence '())
-        (instruction-count 0))
+        (instruction-count 0)
+        (trace-on #f))
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack-table 'initialize)))
@@ -142,7 +143,9 @@
                        (lambda ()
                          (let ((c instruction-count))
                            (set! instruction-count 0)
-                           c)))))
+                           c)))
+                 (list 'trace-on (lambda () (set! trace-on #t)))
+                 (list 'trace-off (lambda () (set! trace-on #f)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
@@ -164,6 +167,7 @@
           (if (null? insts)
               'done
               (begin
+                (if trace-on (begin (display (caar insts)) (newline)))
                 (set! instruction-count (+ 1 instruction-count))
                 ((instruction-execution-proc (car insts)))
                 (execute)))))

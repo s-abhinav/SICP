@@ -1,0 +1,74 @@
+#+Title: Exercise 5.16
+
+Augment the simulator to provide for "instruction tracing". That is, before each instruction is executed, the simulator should print the text of the instruction. Make the machine model accept ~trace-on~ and ~trace-off~ messages to turn tracing on and off.
+
+#+BEGIN_SRC scheme session 5-16 :exports both :results output verbatim
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fact
+    (make-machine
+     '()
+     (list
+      (list '= =)
+      (list '- -)
+      (list '* *))
+     '((assign continue (label fact-done))
+       fact-loop
+       (test (op =) (reg n) (const 1))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-fact))
+       (goto (label fact-loop))
+       after-fact
+       (restore n)
+       (restore continue)
+       (assign val (op *) (reg n) (reg val))
+       (goto (reg continue))
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       fact-done)))
+
+  (set-register-contents! fact 'n 3)
+
+  ((cadr (assoc 'trace-on (fact 'operations))))
+
+  (start fact)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+<stdin>:9:2: warning: possibly unbound variable `make-machine'
+<stdin>:34:0: warning: possibly unbound variable `set-register-contents!'
+<stdin>:38:0: warning: possibly unbound variable `start'
+(assign continue (label fact-done))
+(test (op =) (reg n) (const 1))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(test (op =) (reg n) (const 1))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(test (op =) (reg n) (const 1))
+(branch (label base-case))
+(assign val (const 1))
+(goto (reg continue))
+(restore n)
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+(goto (reg continue))
+(restore n)
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+(goto (reg continue))
+#+end_example
