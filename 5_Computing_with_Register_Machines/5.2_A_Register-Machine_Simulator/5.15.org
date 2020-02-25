@@ -1,0 +1,50 @@
+#+Title: Exercise 5.15
+
+Add counting "instruction counting" to the register machine simulation. That is, have the machine model keep track of the number of instructions executed. Extend the machine model's interface to accept a new message that prints the value of the instruction count and resets the count to zero.
+
+**** The fact machine
+#+BEGIN_SRC scheme :session 5-15 :exports both
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fact
+    (make-machine
+     '()
+     (list
+      (list '= =)
+      (list '- -)
+      (list '* *))
+     '((assign continue (label fact-done))
+       fact-loop
+       (test (op =) (reg n) (const 1))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-fact))
+       (goto (label fact-loop))
+       after-fact
+       (restore n)
+       (restore continue)
+       (assign val (op *) (reg n) (reg val))
+       (goto (reg continue))
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       fact-done)))
+
+  (set-register-contents! fact 'n 3)
+  (start fact)
+ 
+ (get-register-contents fact 'val)
+#+END_SRC
+
+#+RESULTS:
+: 6
+
+#+BEGIN_SRC scheme :session 5-15 :exports both
+  ((cadr (assoc 'print-instruction-count (fact 'operations))))
+#+END_SRC
+
+#+RESULTS:
+: 27

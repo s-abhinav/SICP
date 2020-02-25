@@ -131,12 +131,18 @@
   (let ((pc (make-register 'pc))
         (flag (make-register 'flag))
         (stack-table (make-stack-table))
-        (the-instruction-sequence '()))
+        (the-instruction-sequence '())
+        (instruction-count 0))
     (let ((the-ops
            (list (list 'initialize-stack
                        (lambda () (stack-table 'initialize)))
                  (list 'print-stack-statistics
-                       (lambda () (stack-table 'print-statistics)))))
+                       (lambda () (stack-table 'print-statistics)))
+                 (list 'print-instruction-count
+                       (lambda ()
+                         (let ((c instruction-count))
+                           (set! instruction-count 0)
+                           c)))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
@@ -158,6 +164,7 @@
           (if (null? insts)
               'done
               (begin
+                (set! instruction-count (+ 1 instruction-count))
                 ((instruction-execution-proc (car insts)))
                 (execute)))))
       (define (dispatch message)
