@@ -284,7 +284,8 @@
    (transform-syntax controller-text)
    (lambda (insts labels)
      (update-insts! insts labels machine)
-     insts)))
+     insts)
+   '()))
 
 (define (transform-syntax controller-text)
   (cond ((null? controller-text) '())
@@ -299,22 +300,29 @@
 (define (make-label-entry label-name insts)
   (cons label-name insts))
 
-(define (extract-labels text receive)
+(define (extract-labels text receive previous-label)
   (if (null? text)
       (receive '() '())
-      (extract-labels
-       (cdr text)
-       (lambda (insts labels)
-         (let ((next-inst (car text)))
-           (if (symbol? next-inst)
+      (let* ((next-inst (car text))
+             (label? (symbol? next-inst)))
+        (extract-labels
+         (cdr text)
+         (lambda (insts labels)
+           (if label?
                (if (assoc next-inst labels)
                    (error "Duplicate label -- ASSEMBLE" next-inst)
-                (receive
-                    insts
-                    (cons (make-label-entry next-inst insts) labels)))
+                   (receive
+                       insts
+                       (cons (make-label-entry next-inst insts) labels)))
                (receive
-                   (cons (make-instruction next-inst) insts)
-                   labels)))))))
+                   (cons
+                    (make-instruction
+                     (if (not (null? previous-label))
+                         (append (list 'label previous-label) (list next-inst))
+                         next-inst))
+                    insts)
+                   labels)))
+         (if label? next-inst '())))))
 
 (define (lookup-label labels label-name)
   (let ((val (assoc label-name labels)))
@@ -323,7 +331,9 @@
         (error "Undefined label -- ASSEMBLE" label-name))))
 
 (define (make-execution-procedure inst labels machine pc flag stack ops)
-  (cond ((eq? (car inst) 'assign)
+  (cond ((label-exp? inst)
+         (make-execution-procedure (caddr inst) labels machine pc flag stack ops))
+        ((eq? (car inst) 'assign)
          (make-assign inst machine labels ops pc))
         ((eq? (car inst) 'test)
          (make-test inst machine labels ops flag pc))

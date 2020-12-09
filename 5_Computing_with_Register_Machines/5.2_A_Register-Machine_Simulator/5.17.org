@@ -1,0 +1,79 @@
+#+Title: Exercise 5.17
+
+Extend the instruction tracing of Exercise 5-16 so that before printing an instruction, the simulator prints any labels that immediately precede that instruction in the controller sequence. Be careful to do this in a way that does not interfere with instruction counting of Exercise 5-15.
+
+You will have to make the simulator retain the necessary label information.
+
+* Solution
+
+This exercise was much harder than what I thought and prevented me from continuing with the book for quite a long time. Surprisingly, the solution was quite simple. Tag the instruction text with the previously found label. Storing the previous label in the ~extract-labels~ argument turned out to be the key to the solution.
+
+This approach also does not interfere with the instruction counting.
+
+#+BEGIN_SRC scheme :exports both :results output verbatim :session 5-17
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fact
+    (make-machine
+     '()
+     (list
+      (list '= =)
+      (list '- -)
+      (list '* *))
+     '((assign continue (label fact-done))
+       fact-loop
+       (test (op =) (reg n) (const 1))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-fact))
+       (goto (label fact-loop))
+       after-fact
+       (restore n)
+       (restore continue)
+       (assign val (op *) (reg n) (reg val))
+       (goto (reg continue))
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       fact-done)))
+
+  (set-register-contents! fact 'n 3)
+
+  ((cadr (assoc 'trace-on (fact 'operations))))
+
+  (start fact)
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+(assign continue (label fact-done))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(label base-case (assign val (const 1)))
+(goto (reg continue))
+(label after-fact (restore n))
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+(goto (reg continue))
+(label after-fact (restore n))
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+(goto (reg continue))
+#+end_example
