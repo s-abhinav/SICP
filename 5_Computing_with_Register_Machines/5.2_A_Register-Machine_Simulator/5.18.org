@@ -1,0 +1,99 @@
+#+Title: Exercise 5.18
+
+Modify the ~make-register~ procedure of section 5-2-1 so that registers can be traced.
+
+Registers should accept messages that turn tracing on and off. When a register is traced, assigning a value to the register should print the name of the register, the old contents of the register, and the new contents being assigned. Extend the interface to the machine model to permit you to turn tracing on and off for designated machine registers.
+* Solution
+#+BEGIN_SRC scheme :exports both :results output verbatim :session 5-18
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fact
+    (make-machine
+     '()
+     (list
+      (list '= =)
+      (list '- -)
+      (list '* *))
+     '((assign continue (label fact-done))
+       fact-loop
+       (test (op =) (reg n) (const 1))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-fact))
+       (goto (label fact-loop))
+       after-fact
+       (restore n)
+       (restore continue)
+       (assign val (op *) (reg n) (reg val))
+       (goto (reg continue))
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       fact-done)))
+
+  ((((fact 'get-register) 'n) 'trace-toggle))
+  ((((fact 'get-register) 'val) 'trace-toggle))
+
+  (set-register-contents! fact 'n 3)
+
+  ((cadr (assoc 'trace-on (fact 'operations))))
+
+  (start fact)
+
+  ((((fact 'get-register) 'n) 'trace-toggle))
+  ((((fact 'get-register) 'val) 'trace-toggle))
+#+END_SRC
+
+#+RESULTS:
+#+begin_example
+trace: #t
+trace: #t
+Register: n, Old value: *unassigned*, New value: 3
+(assign continue (label fact-done))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+Register: n, Old value: 3, New value: 2
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(save continue)
+(save n)
+(assign n (op -) (reg n) (const 1))
+Register: n, Old value: 2, New value: 1
+(assign continue (label after-fact))
+(goto (label fact-loop))
+(label fact-loop (test (op =) (reg n) (const 1)))
+(branch (label base-case))
+(label base-case (assign val (const 1)))
+Register: val, Old value: *unassigned*, New value: 1
+(goto (reg continue))
+(label after-fact (restore n))
+Register: n, Old value: 1, New value: 2
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+Register: val, Old value: 1, New value: 2
+(goto (reg continue))
+(label after-fact (restore n))
+Register: n, Old value: 2, New value: 3
+(restore continue)
+(assign val (op *) (reg n) (reg val))
+Register: val, Old value: 2, New value: 6
+(goto (reg continue))
+trace: #f
+trace: #f
+#+end_example
+
+#+BEGIN_SRC scheme :exports both :results output verbatim :session 5-18
+(set-register-contents! fact 'n 3)
+#+END_SRC
+
+#+RESULTS:
+
+As expected, the tracing on n has been set to off.
