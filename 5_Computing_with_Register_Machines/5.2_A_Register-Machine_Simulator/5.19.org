@@ -1,0 +1,157 @@
+#+Title: Exercise 5.19
+
+* Part 1
+Alyssa P. Hacker wants a "breakpoint" feature in the simulator to help her debug her machine designs. You have been hired to install this feature for her. She wants to be able to specify a place in the controller sequence where the simulator will stop and allow her to examine the state of the machine. You are to implement a procedure
+#+BEGIN_SRC scheme :eval no
+  (set-breakpoint <MACHINE> <LABEL> <N>)
+#+END_SRC
+
+
+that sets a breakpoint just before the nth instruction after the given label. For example,
+#+BEGIN_SRC scheme :eval no
+  (set-breakpoint gcd-machine 'test-b 4)
+#+END_SRC
+
+installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a~. 
+
+** Tests
+#+begin_src scheme :session 5-19 :results output code :exports both
+  (use-modules (ice-9 pretty-print))
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+
+  (define fact
+    (make-machine
+     '()
+     (list
+      (list '= =)
+      (list '- -)
+      (list '* *))
+     '((assign continue (label fact-done))
+       fact-loop
+       (test (op =) (reg n) (const 1))
+       (branch (label base-case))
+       (save continue)
+       (save n)
+       (assign n (op -) (reg n) (const 1))
+       (assign continue (label after-fact))
+       (goto (label fact-loop))
+       after-fact
+       (restore n)
+       (restore continue)
+       (assign val (op *) (reg n) (reg val))
+       (goto (reg continue))
+       base-case
+       (assign val (const 1))
+       (goto (reg continue))
+       fact-done)))
+
+  (set-breakpoint fact 'after-fact 1)
+
+  (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+((assign continue (label fact-done))
+ (label fact-loop (test (op =) (reg n) (const 1)))
+ (branch (label base-case))
+ (save continue)
+ (save n)
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
+ (goto (label fact-loop))
+ ((break-point after-fact 1)
+  (label after-fact (restore n)))
+ (restore continue)
+ (assign val (op *) (reg n) (reg val))
+ (goto (reg continue))
+ (label base-case (assign val (const 1)))
+ (goto (reg continue)))
+#+end_src
+
+#+RESULTS:
+
+** Verify that the label is still recognizable by set-breakpoint
+
+#+begin_src scheme :session 5-19 :results output code :exports both
+  (set-breakpoint fact 'after-fact 3)
+  (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+((assign continue (label fact-done))
+ (label fact-loop (test (op =) (reg n) (const 1)))
+ (branch (label base-case))
+ (save continue)
+ (save n)
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
+ (goto (label fact-loop))
+ ((break-point after-fact 1)
+  (label after-fact (restore n)))
+ (restore continue)
+ ((break-point after-fact 3)
+  (assign val (op *) (reg n) (reg val)))
+ (goto (reg continue))
+ (label base-case (assign val (const 1)))
+ (goto (reg continue)))
+#+end_src
+
+#+RESULTS:
+
+** Unknown label test
+
+#+begin_src scheme :session 5-19 :results output verbatim :exports both
+  (set-breakpoint fact 'before-fact 1)
+#+end_src
+
+#+RESULTS:
+: ERROR: In procedure scm-error:
+: Unknown offset or label -- set-breakpoint before-fact
+: 
+: Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+: scheme@(guile-user) [9]> 
+
+** Invalid offset test
+#+begin_src scheme :session 5-19 :results output verbatim :exports both
+  (set-breakpoint fact 'after-fact 0)
+#+end_src
+
+#+RESULTS:
+: ERROR: In procedure scm-error:
+: Cannot install breakpoint before label -- set-breakpoint
+: 
+: Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+: scheme@(guile-user) [10]> 
+
+
+** Verify if execution of machine has not regressed
+#+begin_src scheme :session 5-19 :exports both
+  (set-register-contents! fact 'n 3)
+  (start fact)
+  (get-register-contents fact 'val)
+#+end_src
+
+#+RESULTS:
+: 6
+
+* Part 2
+When the simulator reaches the breakpoint it should print the label and the offset of the breakpoint and stop executing instructions. Alyssa can then use ~get-register-contents~ and ~set-register-contents!~ to manipulate the state of the simulated machine. She should then be able to continue execution by saying 
+#+BEGIN_SRC scheme :eval no
+          (proceed-machine <MACHINE>)
+#+END_SRC
+ 
+* Part 3
+She should also be able to remove a specific breakpoint by means of
+#+BEGIN_SRC scheme :eval no
+          (cancel-breakpoint <MACHINE> <LABEL> <N>)
+#+END_SRC
+ 
+* Part 4
+or to remove all breakpoints by means of
+#+BEGIN_SRC scheme :eval no
+          (cancel-all-breakpoints <MACHINE>)
+#+END_SRC
+

@@ -331,7 +331,8 @@
                     (make-instruction
                      (if (not (null? previous-label))
                          (append (list 'label previous-label) (list next-inst))
-                         next-inst))
+                         ; make mutable pair for debugger
+                         (cons (car next-inst) (cdr next-inst))))
                     insts)
                    labels)))
          (if label? next-inst '())))))
@@ -588,3 +589,31 @@
     (if val
         (cadr val)
         (error "Unknown operation -- ASSEMBLE" symbol))))
+
+;;; Debugger
+
+(define (set-breakpoint machine label offset)
+  (define (install-breakpoint inst)
+    (unless (eq? 'break-point (car inst))
+      (let ((rest (cons (car inst) (cdr inst))))
+        (set-car! inst (list 'break-point label offset))
+        (set-cdr! inst (list rest)))))
+  (define (instruction-iterator inst-seq found-label? n)
+    (cond ((null? inst-seq)
+           (error "Unknown offset or label -- set-breakpoint" label))
+          ((= n 0)
+           (error "Cannot install breakpoint before label -- set-breakpoint")))
+    (let* ((inst (if (and (pair? (caaar inst-seq)) (eq? 'break-point (caaaar inst-seq)))
+                     (cadr (caar inst-seq))
+                     (caar inst-seq)))
+           (label? (and (label-exp? inst) (eq? label (cadr inst)))))
+      (cond
+       ((and (not label?) (not found-label?)) ; Find label
+        (instruction-iterator (cdr inst-seq) found-label? n))
+       ((and label? (not found-label?)) ; Label found, proceed to seek offset
+        (instruction-iterator inst-seq label? n))
+       ((and found-label? (> n 1)) ; Seek offset
+        (instruction-iterator (cdr inst-seq) found-label? (- n 1)))
+       ((and found-label? (= n 1)) ; Install the breakpoint
+        (install-breakpoint inst)))))
+  (instruction-iterator (machine 'the-instruction-sequence) #f offset))
