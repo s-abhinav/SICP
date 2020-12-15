@@ -101,6 +101,32 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 
 #+RESULTS:
 
+** Verify adding the same breakpoint
+#+begin_src scheme :session 5-19 :results output code :exports both
+  (set-breakpoint fact 'after-fact 1)
+  (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+((assign continue (label fact-done))
+ (label fact-loop (test (op =) (reg n) (const 1)))
+ (branch (label base-case))
+ (save continue)
+ (save n)
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
+ (goto (label fact-loop))
+ ((break-point after-fact 1)
+  (label after-fact (restore n)))
+ (restore continue)
+ ((break-point after-fact 3)
+  (assign val (op *) (reg n) (reg val)))
+ (goto (reg continue))
+ (label base-case (assign val (const 1)))
+ (goto (reg continue)))
+#+end_src
+
 ** Unknown label test
 
 #+begin_src scheme :session 5-19 :results output verbatim :exports both
@@ -112,7 +138,7 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 : Unknown offset or label -- set-breakpoint before-fact
 : 
 : Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
-: scheme@(guile-user) [9]> 
+: scheme@(guile-user) [13]> 
 
 ** Invalid offset test
 #+begin_src scheme :session 5-19 :results output verbatim :exports both
@@ -124,18 +150,8 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 : Cannot install breakpoint before label -- set-breakpoint
 : 
 : Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
-: scheme@(guile-user) [10]> 
+: scheme@(guile-user) [14]> 
 
-
-** Verify if execution of machine has not regressed
-#+begin_src scheme :session 5-19 :exports both
-  (set-register-contents! fact 'n 3)
-  (start fact)
-  (get-register-contents fact 'val)
-#+end_src
-
-#+RESULTS:
-: 6
 
 * Part 2
 When the simulator reaches the breakpoint it should print the label and the offset of the breakpoint and stop executing instructions. Alyssa can then use ~get-register-contents~ and ~set-register-contents!~ to manipulate the state of the simulated machine. She should then be able to continue execution by saying 
@@ -143,6 +159,51 @@ When the simulator reaches the breakpoint it should print the label and the offs
           (proceed-machine <MACHINE>)
 #+END_SRC
  
+** Test execution of machine having breakpoints
+#+begin_src scheme :session 5-19 :exports both :results output verbatim
+  (set-register-contents! fact 'n 3)
+  (start fact)
+#+end_src
+
+#+RESULTS:
+: breakpoint -> after-fact 1
+
+#+begin_src scheme :session 5-19 :exports both :results output verbatim
+  (proceed-machine fact)
+#+end_src
+
+#+RESULTS:
+: breakpoint -> after-fact 3
+
+#+begin_src scheme :session 5-19 :exports both :results output verbatim
+  (proceed-machine fact)
+#+end_src
+
+#+RESULTS:
+: breakpoint -> after-fact 1
+
+#+begin_src scheme :session 5-19 :exports both :results output verbatim
+  (proceed-machine fact)
+#+end_src
+
+#+RESULTS:
+: breakpoint -> after-fact 3
+
+#+begin_src scheme :session 5-19 :exports both
+  (proceed-machine fact)
+#+end_src
+
+#+RESULTS:
+: done
+
+#+begin_src scheme :session 5-19 :exports both
+  (get-register-contents fact 'val)
+#+end_src
+
+#+RESULTS:
+: 6
+
+
 * Part 3
 She should also be able to remove a specific breakpoint by means of
 #+BEGIN_SRC scheme :eval no

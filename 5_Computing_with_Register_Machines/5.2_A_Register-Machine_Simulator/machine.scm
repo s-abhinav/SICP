@@ -182,10 +182,14 @@
                 (if trace-on (begin (display (caar insts)) (newline)))
                 (set! instruction-count (+ 1 instruction-count))
                 ((instruction-execution-proc (car insts)))
-                (execute)))))
+                (if (breakpoint? (caar insts))
+                    (print-breakpoint (caar insts))
+                    (execute))))))
       (define (dispatch message)
         (cond ((eq? message 'start)
                (set-contents! pc the-instruction-sequence)
+               (execute))
+              ((eq? message 'proceed)
                (execute))
               ((eq? message 'install-instruction-sequence)
                (lambda (seq) (set! the-instruction-sequence seq)))
@@ -594,7 +598,7 @@
 
 (define (set-breakpoint machine label offset)
   (define (install-breakpoint inst)
-    (unless (eq? 'break-point (car inst))
+    (unless (and (pair? (car inst)) (eq? 'break-point (caar inst)))
       (let ((rest (cons (car inst) (cdr inst))))
         (set-car! inst (list 'break-point label offset))
         (set-cdr! inst (list rest)))))
@@ -603,7 +607,7 @@
            (error "Unknown offset or label -- set-breakpoint" label))
           ((= n 0)
            (error "Cannot install breakpoint before label -- set-breakpoint")))
-    (let* ((inst (if (and (pair? (caaar inst-seq)) (eq? 'break-point (caaaar inst-seq)))
+    (let* ((inst (if (breakpoint? (caar inst-seq))
                      (cadr (caar inst-seq))
                      (caar inst-seq)))
            (label? (and (label-exp? inst) (eq? label (cadr inst)))))
@@ -615,5 +619,20 @@
        ((and found-label? (> n 1)) ; Seek offset
         (instruction-iterator (cdr inst-seq) found-label? (- n 1)))
        ((and found-label? (= n 1)) ; Install the breakpoint
-        (install-breakpoint inst)))))
+        (install-breakpoint (caar inst-seq))))))
   (instruction-iterator (machine 'the-instruction-sequence) #f offset))
+
+(define (breakpoint? inst)
+  (and (pair? (car inst)) (eq? 'break-point (caar inst))))
+
+(define (print-breakpoint inst)
+  (let ((breakpoint (car inst)))
+    (display (string-append
+              "breakpoint -> "
+              (symbol->string (cadr breakpoint))
+              " "
+              (number->string (caddr breakpoint))))
+    (newline)))
+
+(define (proceed-machine machine)
+  (machine 'proceed))
