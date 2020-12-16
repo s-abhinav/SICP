@@ -636,3 +636,20 @@
 
 (define (proceed-machine machine)
   (machine 'proceed))
+
+(define (cancel-breakpoint machine label n)
+  (define (instruction-iterator inst-seq)
+    (cond ((null? inst-seq)
+           (error "Unknown breakpoint with label at offset -- cancel-breakpoint"
+                  label (number->string n)))
+          ((and (breakpoint? (caar inst-seq))
+                (eq? label (cadr (caaar inst-seq)))
+                (eq? n (caddr (caaar inst-seq))))
+           (let ((first (caar (cdaar inst-seq)))
+                 (rest (cdar (cdaar inst-seq)))
+                 (struct (caar inst-seq)))
+             (set-car! struct first)
+             (set-cdr! struct rest)
+             'done))
+          (else (instruction-iterator (cdr inst-seq)))))
+  (instruction-iterator (machine 'the-instruction-sequence)))
