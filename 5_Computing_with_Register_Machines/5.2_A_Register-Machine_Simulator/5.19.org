@@ -245,7 +245,7 @@ She should also be able to remove a specific breakpoint by means of
 #+RESULTS:
 #+begin_src scheme
 ERROR: In procedure scm-error:
-Unknown breakpoint with label at offset after-fact "1"
+Unknown breakpoint with label at offset -- cancel-breakpoint after-fact "1"
 
 Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
 scheme@(guile-user) [7]> 
@@ -256,4 +256,61 @@ or to remove all breakpoints by means of
 #+BEGIN_SRC scheme :eval no
   (cancel-all-breakpoints <MACHINE>)
 #+END_SRC
+
+** Tests
+*** Add some breakpoints
+
+#+begin_src scheme :session 5-19 :results output code :exports both
+  (set-breakpoint fact 'after-fact 1)
+  (set-breakpoint fact 'after-fact 2)
+  (set-breakpoint fact 'after-fact 4)
+  (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+((assign continue (label fact-done))
+ (label fact-loop (test (op =) (reg n) (const 1)))
+ (branch (label base-case))
+ (save continue)
+ (save n)
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
+ (goto (label fact-loop))
+ ((break-point after-fact 1)
+  (label after-fact (restore n)))
+ ((break-point after-fact 2) (restore continue))
+ ((break-point after-fact 3)
+  (assign val (op *) (reg n) (reg val)))
+ ((break-point after-fact 4)
+  (goto (reg continue)))
+ (label base-case (assign val (const 1)))
+ (goto (reg continue)))
+#+end_src
+
+#+RESULTS:
+
+*** Cancel all breakpoints
+#+begin_src scheme :session 5-19 :results output code :exports both
+  (cancel-all-breakpoints fact)
+  (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+((assign continue (label fact-done))
+ (label fact-loop (test (op =) (reg n) (const 1)))
+ (branch (label base-case))
+ (save continue)
+ (save n)
+ (assign n (op -) (reg n) (const 1))
+ (assign continue (label after-fact))
+ (goto (label fact-loop))
+ (label after-fact (restore n))
+ (restore continue)
+ (assign val (op *) (reg n) (reg val))
+ (goto (reg continue))
+ (label base-case (assign val (const 1)))
+ (goto (reg continue)))
+#+end_src
 
