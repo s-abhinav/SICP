@@ -1,7 +1,10 @@
 #+Title: Exercise 5.19
 
-* Part 1
-Alyssa P. Hacker wants a "breakpoint" feature in the simulator to help her debug her machine designs. You have been hired to install this feature for her. She wants to be able to specify a place in the controller sequence where the simulator will stop and allow her to examine the state of the machine. You are to implement a procedure
+
+***** a.
+Alyssa P. Hacker wants a "breakpoint" feature in the simulator to help her debug her machine designs. You have been hired to install this feature for her. She wants to be able to specify a place in the controller sequence where the simulator will stop and allow her to examine the state of the machine.
+
+You are to implement a procedure
 #+BEGIN_SRC scheme :eval no
   (set-breakpoint <MACHINE> <LABEL> <N>)
 #+END_SRC
@@ -14,7 +17,7 @@ that sets a breakpoint just before the nth instruction after the given label. Fo
 
 installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a~. 
 
-** Tests
+****** Tests
 #+begin_src scheme :session 5-19 :results output code :exports both
   (use-modules (ice-9 pretty-print))
   (add-to-load-path (dirname "./"))
@@ -72,7 +75,7 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 
 #+RESULTS:
 
-** Verify that the label is still recognizable by set-breakpoint
+****** Verify that the label is still recognizable by set-breakpoint
 
 #+begin_src scheme :session 5-19 :results output code :exports both
   (set-breakpoint fact 'after-fact 3)
@@ -101,7 +104,7 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 
 #+RESULTS:
 
-** Verify adding the same breakpoint
+****** Verify adding the same breakpoint
 #+begin_src scheme :session 5-19 :results output code :exports both
   (set-breakpoint fact 'after-fact 1)
   (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
@@ -127,7 +130,7 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
  (goto (reg continue)))
 #+end_src
 
-** Unknown label test
+****** Unknown label test
 
 #+begin_src scheme :session 5-19 :results output verbatim :exports both
   (set-breakpoint fact 'before-fact 1)
@@ -140,7 +143,7 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 : Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
 : scheme@(guile-user) [13]> 
 
-** Invalid offset test
+****** Invalid offset test
 #+begin_src scheme :session 5-19 :results output verbatim :exports both
   (set-breakpoint fact 'after-fact 0)
 #+end_src
@@ -153,13 +156,14 @@ installs a breakpoint in ~gcd-machine~ just before the assignment to register ~a
 : scheme@(guile-user) [14]> 
 
 
-* Part 2
-When the simulator reaches the breakpoint it should print the label and the offset of the breakpoint and stop executing instructions. Alyssa can then use ~get-register-contents~ and ~set-register-contents!~ to manipulate the state of the simulated machine. She should then be able to continue execution by saying 
+
+***** b.
+When the simulator reaches the breakpoint it should print the label and the offset of the breakpoint and stop executing instructions. Alyssa can then use ~get-register-contents~ and ~set-register-contents!~ to manipulate the state of the simulated machine. She should then be able to continue execution by saying
 #+BEGIN_SRC scheme :eval no
           (proceed-machine <MACHINE>)
 #+END_SRC
  
-** Test execution of machine having breakpoints
+****** Test execution of machine having breakpoints
 #+begin_src scheme :session 5-19 :exports both :results output verbatim
   (set-register-contents! fact 'n 3)
   (start fact)
@@ -204,13 +208,13 @@ When the simulator reaches the breakpoint it should print the label and the offs
 : 6
 
 
-* Part 3
+***** c.
 She should also be able to remove a specific breakpoint by means of
 #+BEGIN_SRC scheme :eval no
   (cancel-breakpoint <MACHINE> <LABEL> <N>)
 #+END_SRC
 
-** Test
+****** Test
 #+begin_src scheme :session 5-19 :results output code :exports both
   (cancel-breakpoint fact 'after-fact 1)
   (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
@@ -237,7 +241,7 @@ She should also be able to remove a specific breakpoint by means of
 
 #+RESULTS:
  
-** Test invalid cancel operation
+****** Test invalid cancel operation
 #+begin_src scheme :session 5-19 :results output code :exports both
   (cancel-breakpoint fact 'after-fact 1)
 #+end_src
@@ -251,14 +255,14 @@ Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
 scheme@(guile-user) [7]> 
 #+end_src
 
-* Part 4
+***** d.
 or to remove all breakpoints by means of
 #+BEGIN_SRC scheme :eval no
   (cancel-all-breakpoints <MACHINE>)
 #+END_SRC
 
-** Tests
-*** Add some breakpoints
+****** Tests
+****** Add some breakpoints
 
 #+begin_src scheme :session 5-19 :results output code :exports both
   (set-breakpoint fact 'after-fact 1)
@@ -290,7 +294,7 @@ or to remove all breakpoints by means of
 
 #+RESULTS:
 
-*** Cancel all breakpoints
+****** Cancel all breakpoints
 #+begin_src scheme :session 5-19 :results output code :exports both
   (cancel-all-breakpoints fact)
   (pretty-print (map (lambda (x) (car x)) (fact 'the-instruction-sequence)))
