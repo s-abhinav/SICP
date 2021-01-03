@@ -1,0 +1,18 @@
+#+Title: Exercise 5.20
+
+** Draw the box-and-pointer representation and the memory-vector representation (as in Figure 5-14) of the list structure produced by
+
+#+begin_src scheme: eval no
+          (define x (cons 1 2))
+          (define y (list x x))
+#+end_src
+
+ with the ~free~ pointer initially ~p1~.
+
+[[./images/5.20/5.20.svg]]
+
+** What is the final value of ~free~?
+7
+
+** What pointers represent the values of ~x~ and ~y~?
+vX and vY at 1 and 4 representing variables in the global environment.
