@@ -6,12 +6,12 @@ Use the register-machine language to describe the iterative factorial machine of
   (controller
    test-c
    (test (op >) (reg c) (const 1))
-   (branch (label fib-done))
+   (branch (label fact-done))
    (assign t1 (op *) (reg p) (reg c))
    (assign t2 (op +) (reg c) (const 1))
    (assign p (reg t1))
    (assign c (reg t2))
    (goto (label test-c))
-   fib-done)
+   fact-done)
 #+END_SRC
 
