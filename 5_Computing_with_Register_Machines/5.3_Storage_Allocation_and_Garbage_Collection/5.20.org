@@ -2,9 +2,9 @@
 
 ** Draw the box-and-pointer representation and the memory-vector representation (as in Figure 5-14) of the list structure produced by
 
-#+begin_src scheme: eval no
-          (define x (cons 1 2))
-          (define y (list x x))
+#+begin_src scheme eval no
+  (define x (cons 1 2))
+  (define y (list x x))
 #+end_src
 
  with the ~free~ pointer initially ~p1~.
