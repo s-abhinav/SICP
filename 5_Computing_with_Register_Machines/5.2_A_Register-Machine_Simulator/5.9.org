@@ -14,9 +14,14 @@ The treatment of machine operations above permits them to operate on labels as w
         (apply op (map (lambda (p) (p)) aprocs)))))
 #+END_SRC
 
-Tested in machine with these two inputs and behaving as expected. I'm not running them through org-babel since the error output are not being captured.
+Tested in machine with these two inputs and behaving as expected.
 
-#+BEGIN_SRC scheme :eval no
+#+begin_src scheme :session 5-9 :exports none :results silent
+  (add-to-load-path (dirname "./"))
+  (load "./machine.scm")
+#+end_src
+
+#+BEGIN_SRC scheme :session 5-9 :exports both :results output verbatim
   (define gcd-machine
     (make-machine
      '(a b t)
@@ -31,7 +36,14 @@ Tested in machine with these two inputs and behaving as expected. I'm not runnin
        gcd-done)))
 #+END_SRC
 
-#+BEGIN_SRC scheme :eval no
+#+RESULTS:
+: ERROR: In procedure scm-error:
+: Cannot apply operation on label -- ASSEMBLE gcd-done
+: 
+: Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+: scheme@(guile-user) [1]> 
+
+#+BEGIN_SRC scheme :session 5-9 :exports both :results output verbatim
   (define gcd-machine
     (make-machine
      '(a b t)
@@ -45,3 +57,10 @@ Tested in machine with these two inputs and behaving as expected. I'm not runnin
        (goto (label test-b))
        gcd-done)))
 #+END_SRC
+
+#+RESULTS:
+: ERROR: In procedure scm-error:
+: Cannot apply operation on label -- ASSEMBLE gcd-done
+: 
+: Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+: scheme@(guile-user) [2]> 
