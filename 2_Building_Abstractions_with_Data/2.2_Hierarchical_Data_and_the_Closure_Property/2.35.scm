@@ -21,8 +21,8 @@
 (define (count-leaves-2-2-2 x)
   (cond ((null? x) 0)
 	((not (pair? x)) 1)
-	(else (+ (count-leaves (car x))
-		 (count-leaves (cdr x))))))
+	(else (+ (count-leaves-2-2-2 (car x))
+		 (count-leaves-2-2-2 (cdr x))))))
 
 (define x (cons (list 1 2) (list 3 4)))
 
