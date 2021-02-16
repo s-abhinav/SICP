@@ -1,0 +1,102 @@
+#+Title: Exercise 5.21
+Implement register machines for the following procedures. Assume that the list-structure memory operations are available as machine primitives.
+
+* a. Recursive ~count-leaves~:
+#+begin_src scheme :eval no
+  (define (count-leaves tree)
+    (cond ((null? tree) 0)
+          ((not (pair? tree)) 1)
+          (else (+ (count-leaves (car tree))
+                   (count-leaves (cdr tree))))))
+#+end_src
+
+This is a double recursion similar to Figure 5.12.
+
+1. I have replaced the cars and cdrs operation with the vector-ref and the-cars/the-cdrs.
+2. not-pair? is being assumed to be machine primitive.
+
+#+begin_src scheme :eval no
+  (controller
+     (assign continue (label count-leaves-done))
+   count-leaves-loop
+     ;; base case 0
+     (test (op null?) (reg tree))
+     (branch (label base-case-0))
+     ;; base case 1
+     (test (op not-pair?) (reg tree))
+     (branch (label base-case-1))
+     ;; compute car tree
+     (save continue)
+     (assign continue (label after-count-leaves-car))
+     (save tree)
+     (assign tree (op vector-ref) (reg the-cars) (reg tree))
+     (goto (label count-leaves-loop)) ; perform recursive call
+   after-count-leaves-car
+     (restore tree)
+     (restore continue)
+     ;; compute cdr tree
+     (assign tree (op vector-ref) (reg the-cdrs) (reg tree))
+     (save continue)
+     (assign continue (label after-count-leaves-cdr))
+     (save val)
+     (goto (label count-leaves-loop))
+   after-count-leaves-cdr
+     (assign tree (reg val))
+     (restore val)
+     (restore continue)
+     (assign val (op +) (reg val) (reg tree))
+     (goto (reg continue))
+   base-case-0
+     (assign val (const 0))
+     (goto (reg continue))
+   base-case-1
+     (assign val (const 1))
+     (goto (reg continue))
+   count-leaves-done)
+#+end_src
+
+* b. Recursive ~count-leaves~ with explicit counter:
+#+begin_src scheme :eval no
+  (define (count-leaves tree)
+    (define (count-iter tree n)
+      (cond ((null? tree) n)
+            ((not (pair? tree)) (+ n 1))
+            (else (count-iter (cdr tree)
+                              (count-iter (car tree) n)))))
+    (count-iter tree 0))
+#+end_src
+
+This has been an interesting exercise, unlike the other recursive procedures which were converted to machine code in previous sections in this chapter. The Fibonacci function used double recursion, this one however contains a recursive call in the argument of the function, hence the use of applicative-order evaluation.
+While this exercise took me quite a long time to figure out what the book really wanted the student to get out of this, it turned out to reinforce the process required to setup different types of recursive calls in machine language.
+
+#+begin_src scheme :eval no
+  (controller
+     (assign continue count-leaves-done)
+   count-leaves-loop
+     ;; base case 0
+     (test (op null?) (reg tree))
+     (branch (label base-case-0))
+     ;; base case 1
+     (test (op not-pair?) (reg tree))
+     (branch (label base-case-1))
+     ;; compute car tree
+     (save continue)
+     ;; this is not a tail call and needs to save values on the stack for the outer count-iter to process later.
+     (assign continue (label after-count-leaves-car))
+     (save tree)
+     (assign tree (op vector-ref) (reg the-cars) (reg tree))
+     (goto (label count-leaves-loop))
+   after-count-leaves-car
+     (restore continue)
+     (restore tree)
+     (assign tree (op vector-ref) (reg the-cdrs) (reg tree))
+     (goto (label count-leaves-loop)) ; loop, since there's no stack to go back to (tail call)
+   base-case-0
+     (goto (reg continue))
+   base-case-1
+     (assign n (op +) (reg n) (const 1))
+     (goto (reg continue))
+   count-leaves-done)
+#+end_src
+
+These will stay theoretical at this point and I haven't planned to alter machine.scm to test them.
