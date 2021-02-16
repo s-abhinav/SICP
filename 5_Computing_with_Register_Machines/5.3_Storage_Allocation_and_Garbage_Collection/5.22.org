@@ -1,0 +1,49 @@
+#+Title: Exercise 5.22
+Exercise 3-12 of section 3-3-1 presented an ~append~ procedure that appends two lists to form a new list and an ~append!~ procedure that splices two lists together. Design a register machine to implement each of these procedures. Assume that the list-structure memory operations are available as primitive operations.
+
+* a. ~append~
+
+#+begin_src scheme :eval no
+  (define (append x y)
+    (if (null? x)
+        y
+        (cons (car x) (append (cdr x) y))))
+#+end_src
+
+#+begin_src scheme :eval no
+  (controller
+   append-loop
+     (test (op null?) (reg x))
+     (branch (label append-done))
+     ;; compute the second arg of cons
+     (save x)
+     (assign x (op cdr) (reg x))
+     (save continue)
+     (assign continue (label after-append))
+     (goto (label append-loop))
+   after-append
+     (restore x)
+     (restore continue)
+     ;; prepend x to y
+     (perform (op set-car!) (reg y) (op car) (reg x))
+     (perform (op set-cdr!) (reg y) (op cdr) (reg y))
+     (goto (reg continue))
+   ;; when done, value is in reg y.
+   append-done)
+#+end_src
+
+* b. ~append!~
+#+begin_src scheme :eval no
+  (define (append! x y)
+    (set-cdr! (last-pair x) y)
+    x)
+#+end_src
+
+I see two ways of solving this problem.
+1. Write a procedure for last-pair in machine language, taking O(n) time to do the lookup of the last value of x, then setting the cdr of that value to y.
+
+   The implementation of last-pair should be similar to the other recursive procedures implemented in the book. This is at the expense of runtime performance.
+n
+2. Another approach is to setup and update an auxiliary size register for each vector on every set! operation. Then the size can be used to do a vector-ref lookup using the size.
+
+   This approach will be complex where the machine will have to be altered to associate an additional register for storing the size of a vector, however, this will be much faster for runtime, only taking a space of one more register per vector.
