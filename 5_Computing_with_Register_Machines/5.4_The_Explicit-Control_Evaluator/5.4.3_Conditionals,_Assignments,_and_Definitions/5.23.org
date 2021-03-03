@@ -1,0 +1,38 @@
+#+Title: Exercise 5.23
+
+Extend the evaluator to handle derived expressions such as ~cond~, ~let~, and so on (section *Note4-1-2::). You may "cheat" and assume that the syntax transformers such as `cond->if' are available as machine operations.
+
+Most of the machine primitives for the explicit control evaluator is found in M-Eval.scm of The Metacircular Evaluator. I could have loaded the file directly into EC-Eval.scm but the redifinition of ~apply~ in M-Eval is causing issues. I can't find a clean way of doing it except with redefining the procedures in EC-Eval.scm.
+
+As for this exercise, it turned out to be very easy. The current cond expression needs to be overwritten with that of the expression tranformed into if. This is done with assigning the cond exp reg with the result of cond-if.
+
+I presume let should be similar to cond->if transformer, hence the implementation of only cond->if.
+
+#+begin_src scheme :session 5-23 :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+#+begin_src scheme :session 5-23 :exports both :results output verbatim
+  (eceval-exp eceval
+              '(define (abs x)
+                 (cond ((< x 0) (- x))
+                       (else x))))
+#+end_src
+
+#+RESULTS:
+: ok
+
+#+begin_src scheme :session 5-23 :exports both :results output verbatim
+  (eceval-exp eceval '(abs -5))
+#+end_src
+
+#+RESULTS:
+: 5
+
+#+begin_src scheme :session 5-23 :exports both :results output verbatim
+  (eceval-exp eceval '(abs 10))
+#+end_src
+
+#+RESULTS:
+: 10

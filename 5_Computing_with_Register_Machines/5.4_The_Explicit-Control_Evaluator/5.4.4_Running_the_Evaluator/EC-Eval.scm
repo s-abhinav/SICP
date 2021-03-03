@@ -33,6 +33,8 @@
 
 (define (if? exp) (tagged-list? exp 'if))
 
+(define (cond? exp) (tagged-list? exp 'cond))
+
 (define (lambda? exp) (tagged-list? exp 'lambda))
 
 (define (begin? exp) (tagged-list? exp 'begin))
@@ -227,6 +229,43 @@
       (cadddr exp)
       'false))
 
+(define (cond-clauses exp) (cdr exp))
+
+(define (cond-predicate clause) (car clause))
+
+(define (cond-else-clause? clause)
+  (eq? (cond-predicate clause) 'else))
+
+(define (cond-actions clause) (cdr clause))
+
+(define (make-begin seq) (cons 'begin seq))
+
+(define (sequence->exp seq)
+  (cond ((null? seq) seq)
+	((last-exp? seq) (first-exp seq))
+	(else (make-begin seq))))
+
+(define (make-if predicate consequent alternative)
+  (list 'if predicate consequent alternative))
+
+(define (expand-clauses clauses)
+  (if (null? clauses)
+      'false                          ; no `else' clause
+      (let ((first (car clauses))
+	    (rest (cdr clauses)))
+	(if (cond-else-clause? first)
+	    (if (null? rest)
+		(sequence->exp (cond-actions first))
+		(error "ELSE clause isn't last -- COND->IF"
+		       clauses))
+	    (make-if (cond-predicate first)
+		     (sequence->exp (cond-actions first))
+		     (expand-clauses rest))))))
+
+(define (cond->if exp)
+  (expand-clauses (cond-clauses exp)))
+
+
 (define (true? x)
   (not (eq? x #f)))
 
@@ -295,7 +334,9 @@
 	(list '= =)
 	(list '* *)
 	(list '+ +)
-	(list '- -)))
+	(list '- -)
+    (list '< <)
+    (list '> >)))
 
 (define (primitive-procedure-names)
   (map car
@@ -348,7 +389,8 @@
                      (procedure-parameters object)
                      (procedure-body object)
                      '<procedure-env>))
-      (display object)))
+      (display object))
+  (newline))
 
 (define eceval-operations
   (list (list 'self-evaluating? self-evaluating?)
@@ -361,6 +403,7 @@
         (list 'assignment? assignment?)
         (list 'definition? definition?)
         (list 'if? if?)
+        (list 'cond? cond?)
         (list 'lambda? lambda?)
         (list 'begin? begin?)
         (list 'application? application?)
@@ -388,6 +431,7 @@
         (list 'if-predicate if-predicate)
         (list 'if-consequent if-consequent)
         (list 'if-alternative if-alternative)
+        (list 'cond->if cond->if)
         (list 'true #t)
         (list 'false #f)
         (list 'true? true?)
@@ -409,31 +453,13 @@
   '(
   ;;; Running the evaluator
   read-eval-print-loop
-    (perform (op initialize-stack))
-    (perform
-     (op prompt-for-input) (const ";;; EC-Eval input:"))
-    (assign exp (op read))
-    (assign env (op get-global-environment))
+    ;; (perform (op initialize-stack))
+    ;; (perform
+    ;;  (op prompt-for-input) (const ";;; EC-Eval input:"))
+    ;; (assign exp (op read))
+    ;; (assign env (op get-global-environment))
     (assign continue (label print-result))
     (goto (label eval-dispatch))
-  print-result
-    (perform
-     (op announce-output) (const ";;; EC-Eval value:"))
-    (perform (op user-print) (reg val))
-    (goto (label read-eval-print-loop))
-
-  unknown-expression-type
-    (assign val (const unknown-expression-type-error))
-    (goto (label signal-error))
-
-  unknown-procedure-type
-    (restore continue)    ; clean up stack (from `apply-dispatch')
-    (assign val (const unknown-procedure-type-error))
-    (goto (label signal-error))
-
-  signal-error
-    (perform (op user-print) (reg val))
-    (goto (label read-eval-print-loop))
 
   ;;; The Core of the Explicit-Control Evaluator
   eval-dispatch
@@ -449,6 +475,8 @@
     (branch (label ev-definition))
     (test (op if?) (reg exp))
     (branch (label ev-if))
+    (test (op cond?) (reg exp))
+    (branch (label cond->if))
     (test (op lambda?) (reg exp))
     (branch (label ev-lambda))
     (test (op begin?) (reg exp))
@@ -589,6 +617,10 @@
     (assign exp (op if-consequent) (reg exp))
     (goto (label eval-dispatch))
 
+  cond->if
+    (assign exp (op cond->if) (reg exp))
+    (goto (label eval-dispatch))
+
   ;;; Assignment and definitions
   ev-assignment
     (assign unev (op assignment-variable) (reg exp))
@@ -623,8 +655,34 @@
      (op define-variable!) (reg unev) (reg val) (reg env))
     (assign val (const ok))
     (goto (reg continue))
+
+  unknown-expression-type
+    (assign val (const unknown-expression-type-error))
+    (goto (label signal-error))
+
+  unknown-procedure-type
+    (restore continue)    ; clean up stack (from `apply-dispatch')
+    (assign val (const unknown-procedure-type-error))
+    (goto (label signal-error))
+
+  signal-error
+    (perform (op user-print) (reg val))
+    ; (goto (label read-eval-print-loop))
+
+  print-result
+    ;; (perform
+    ;;  (op announce-output) (const ";;; EC-Eval value:"))
+    (perform (op user-print) (reg val))
+    ; (goto (label read-eval-print-loop))
+
   )
 )
 
 (define eceval
   (make-machine '() eceval-operations ec-eval-controller))
+
+(define (eceval-exp machine exp)
+  ((machine 'stack) 'initialize)
+  ((((machine 'get-register) 'exp) 'set) exp)
+  ((((machine 'get-register) 'env) 'set) (get-global-environment))
+  (start machine))
