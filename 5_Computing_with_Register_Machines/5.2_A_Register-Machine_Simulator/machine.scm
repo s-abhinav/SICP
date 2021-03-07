@@ -11,11 +11,11 @@
                  (display "New value: ") (display value) (newline))
                (set! contents value)))
             ((eq? message 'trace-toggle)
-             (lambda ()
-               (set! trace-on (not trace-on))
-               (display "trace: ")
-               (display trace-on)
-               (newline)))
+             ((lambda ()
+                (set! trace-on (not trace-on))
+                (display "trace: ")
+                (display trace-on)
+                (newline))))
             (else
              (error "Unknown request -- REGISTER" message))))
     dispatch))
@@ -156,8 +156,8 @@
                          (let ((c instruction-count))
                            (set! instruction-count 0)
                            c)))
-                 (list 'trace-on (lambda () (set! trace-on #t)))
-                 (list 'trace-off (lambda () (set! trace-on #f)))))
+                 (list 'trace-toggle
+                       (lambda () (set! trace-on (not trace-on))))))
           (register-table
            (list (list 'pc pc) (list 'flag flag))))
       (define (allocate-register name)
@@ -277,6 +277,12 @@
 
 (define (get-register-contents machine register-name)
   (get-contents (get-register machine register-name)))
+
+(define (instruction-trace-toggle machine)
+  ((cadr (assoc 'trace-toggle (machine 'operations)))))
+
+(define (register-trace-toggle machine register-name)
+  ((get-register machine register-name) 'trace-toggle))
 
 (define (set-register-contents! machine register-name value)
   (set-contents! (get-register machine register-name) value)

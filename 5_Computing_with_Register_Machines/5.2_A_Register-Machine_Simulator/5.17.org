@@ -42,7 +42,7 @@ This approach also does not interfere with the instruction counting.
 
   (set-register-contents! fact 'n 3)
 
-  ((cadr (assoc 'trace-on (fact 'operations))))
+  (instruction-trace-toggle fact)
 
   (start fact)
 #+END_SRC

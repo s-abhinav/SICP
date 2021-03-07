@@ -34,16 +34,13 @@ Augment the simulator to provide for "instruction tracing". That is, before each
 
   (set-register-contents! fact 'n 3)
 
-  ((cadr (assoc 'trace-on (fact 'operations))))
+  (instruction-trace-toggle fact)
 
   (start fact)
 #+END_SRC
 
 #+RESULTS:
 #+begin_example
-<stdin>:9:2: warning: possibly unbound variable `make-machine'
-<stdin>:34:0: warning: possibly unbound variable `set-register-contents!'
-<stdin>:38:0: warning: possibly unbound variable `start'
 (assign continue (label fact-done))
 (test (op =) (reg n) (const 1))
 (branch (label base-case))

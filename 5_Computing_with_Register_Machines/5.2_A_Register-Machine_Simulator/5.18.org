@@ -34,17 +34,17 @@ Registers should accept messages that turn tracing on and off. When a register i
        (goto (reg continue))
        fact-done)))
 
-  ((((fact 'get-register) 'n) 'trace-toggle))
-  ((((fact 'get-register) 'val) 'trace-toggle))
+  (register-trace-toggle fact 'n)
+  (register-trace-toggle fact 'val)
 
   (set-register-contents! fact 'n 3)
 
-  ((cadr (assoc 'trace-on (fact 'operations))))
+  (instruction-trace-toggle fact)
 
   (start fact)
 
-  ((((fact 'get-register) 'n) 'trace-toggle))
-  ((((fact 'get-register) 'val) 'trace-toggle))
+  (register-trace-toggle fact 'n)
+  (register-trace-toggle fact 'val)
 #+END_SRC
 
 #+RESULTS:
