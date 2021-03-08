@@ -1,0 +1,72 @@
+#+Title: Exercise 5.24
+Implement ~cond~ as a new basic special form without reducing it to ~if~. You will have to construct a loop that tests the predicates of successive ~cond~ clauses until you find one that is true, and then use ~ev-sequence~ to evaluate the actions of the clause.
+
+#+begin_src scheme :session 5-24 :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+#+begin_src scheme :session 5-24 :exports both :results output verbatim
+  (set! cond-special-form-flag #t)
+
+  (eceval-exp eceval
+  '(define (abs x)
+         (cond ((> x 0) x)
+               ((= x 0) 0)
+               ((< x 0) (- x)))))
+#+end_src
+
+#+RESULTS:
+: ok
+
+* Tests
+** abs inputs
+Tests
+- ev-cond-clause-iterator
+- ev-cond-decide
+- ev-cond-actions
+- apply dispatch in cond actions (- x)
+#+begin_src scheme :session 5-24 :exports both :results output verbatim
+  (map (lambda (x) (eceval-exp eceval x)) (list '(abs -5) '(abs 5) '(abs 0)))
+#+end_src
+
+#+RESULTS:
+: 5
+: 5
+: 0
+
+** no valid case (ev-cond-null)
+#+begin_src scheme :session 5-24 :exports both :results output verbatim
+  (eceval-exp eceval
+              '(cond ((= 1 2) 'one)
+                     ((= 2 3) 'two)))
+#+end_src
+
+#+RESULTS:
+: #f
+
+** else (ev-cond-else)
+#+begin_src scheme :session 5-24 :exports both :results output verbatim
+  (eceval-exp eceval
+              '(cond ((= 1 2) 'one)
+                     ((= 2 3) 'two)
+                     (else 'three)))
+#+end_src
+
+#+RESULTS:
+: three
+
+
+** else syntax error (ev-cond-else-syntax-check)
+#+begin_src scheme :session 5-24 :exports both :results output verbatim
+  (eceval-exp eceval
+              '(cond ((= 1 2) 'one)
+                     (else 'false)
+                     ((= 2 3) 'two)))
+#+end_src
+
+#+RESULTS:
+: cond-else-clause-not-last
+: cond-else-clause-not-last
+
+ Not sure why machine is evaluating signal error twice.

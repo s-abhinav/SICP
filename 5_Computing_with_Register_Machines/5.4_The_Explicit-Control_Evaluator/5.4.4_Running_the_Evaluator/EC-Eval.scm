@@ -229,6 +229,14 @@
       (cadddr exp)
       'false))
 
+(define cond-special-form-flag #f)
+
+;;; Let machine decide which strategy to use
+;;; for evaluating cond based on this boolean.
+;;; #f to use derived cond->if
+;;; #t to use special form
+(define (cond-special-form) cond-special-form-flag)
+
 (define (cond-clauses exp) (cdr exp))
 
 (define (cond-predicate clause) (car clause))
@@ -264,7 +272,6 @@
 
 (define (cond->if exp)
   (expand-clauses (cond-clauses exp)))
-
 
 (define (true? x)
   (not (eq? x #f)))
@@ -400,6 +407,9 @@
         (list 'no-more-exps? no-more-exps?)
         (list 'variable? variable?)
         (list 'quoted? quoted?)
+        (list 'car car)
+        (list 'cdr cdr)
+        (list 'null? null?)
         (list 'assignment? assignment?)
         (list 'definition? definition?)
         (list 'if? if?)
@@ -432,6 +442,11 @@
         (list 'if-consequent if-consequent)
         (list 'if-alternative if-alternative)
         (list 'cond->if cond->if)
+        (list 'cond-special-form cond-special-form)
+        (list 'cond-clauses cond-clauses)
+        (list 'cond-else-clause? cond-else-clause?)
+        (list 'cond-predicate cond-predicate)
+        (list 'cond-actions cond-actions)
         (list 'true #t)
         (list 'false #f)
         (list 'true? true?)
@@ -451,8 +466,8 @@
 
 (define ec-eval-controller
   '(
-  ;;; Running the evaluator
-  read-eval-print-loop
+    ;;; Running the evaluator
+    read-eval-print-loop
     ;; (perform (op initialize-stack))
     ;; (perform
     ;;  (op prompt-for-input) (const ";;; EC-Eval input:"))
@@ -476,7 +491,7 @@
     (test (op if?) (reg exp))
     (branch (label ev-if))
     (test (op cond?) (reg exp))
-    (branch (label cond->if))
+    (branch (label ev-cond))
     (test (op lambda?) (reg exp))
     (branch (label ev-lambda))
     (test (op begin?) (reg exp))
@@ -617,9 +632,66 @@
     (assign exp (op if-consequent) (reg exp))
     (goto (label eval-dispatch))
 
+  ev-cond
+    (test (op cond-special-form))
+    (branch (label ev-cond-special-form))
   cond->if
     (assign exp (op cond->if) (reg exp))
     (goto (label eval-dispatch))
+
+  ev-cond-special-form
+    (assign exp (op cond-clauses) (reg exp))
+    (goto (label ev-cond-clause-iterator))
+
+  ev-cond-clause-iterator
+    (test (op null?) (reg exp))
+    (branch (label ev-cond-null))
+    (save exp)
+    (save env)
+    (save continue)
+    (assign exp (op car) (reg exp)) ; first clause
+    (test (op cond-else-clause?) (reg exp))
+    (branch (label ev-cond-else-syntax-check))
+    (save exp)
+    (assign exp (op cond-predicate) (reg exp))
+    (assign continue (label ev-cond-decide))
+    (goto (label eval-dispatch))
+
+  ;; if predicate is true, eval cond actions, else loop
+  ev-cond-decide
+    (restore exp) ; make the cond clause available
+    (restore env)
+    (restore continue)
+    (test (op true?) (reg val))
+    (branch (label ev-cond-actions))
+    ;; clause not found, compute rest of cond clauses
+    (restore exp)
+    (assign exp (op cdr) (reg exp)) ; cdr the cond body
+    (goto (label ev-cond-clause-iterator))
+
+  ev-cond-actions
+    (save continue)
+    (assign unev (op cond-actions) (reg exp))
+    (goto (label ev-sequence))
+
+  ev-cond-else-syntax-check
+    (restore exp) ; make cond body available
+    (save exp)
+    (assign exp (op cdr) (reg exp))
+    (test (op null?) (reg exp)) ; if not null? 'else' is in wrong pos
+    (branch (label ev-cond-else))
+    (goto (label syntax-error-cond-else))
+
+  ev-cond-else
+    (restore exp) ; cond body
+    (assign exp (op car) (reg exp))
+    (goto (label ev-cond-actions))
+
+  ;; No true predicate or else clause found
+  ev-cond-null
+    (save continue)
+    (assign unev (const (#f)))
+    (goto (label ev-sequence))
 
   ;;; Assignment and definitions
   ev-assignment
@@ -665,6 +737,10 @@
     (assign val (const unknown-procedure-type-error))
     (goto (label signal-error))
 
+  syntax-error-cond-else
+    (assign val (const cond-else-clause-not-last))
+    (goto (label signal-error))
+
   signal-error
     (perform (op user-print) (reg val))
     ; (goto (label read-eval-print-loop))
@@ -674,7 +750,6 @@
     ;;  (op announce-output) (const ";;; EC-Eval value:"))
     (perform (op user-print) (reg val))
     ; (goto (label read-eval-print-loop))
-
   )
 )
 
