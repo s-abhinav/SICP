@@ -7,12 +7,11 @@
 thunk
 ***** What would the values be with Cy's proposed change to `eval-sequence'?
 
-The would both be the same, since the last value in the sequence are not forced in both cases.
+They would both be the same, since the last value in the sequence are not forced in both cases.
 
 ****  c. Cy also points out that changing `eval-sequence' as he proposes does not affect the behavior of the example in part a.  Explain why this is true.
 Since Cy's version is forcing non last expression in the begin, it will work similar to the version in the text anyway. His version is also not forcing the last expression, which makes it similar to the version in the text.
  
-
 **** d. How do you think sequences ought to be treated in the lazy evaluator?  Do you like Cy's approach, the approach in the text, or some other approach?
 Cy's approach is adding a special case in the evaluator where it's treating a sequence differently, whereas the text's approach is being more general.
 I don't see why modifying the evaluator in more areas to achieve the same results is a good design philosophy.
