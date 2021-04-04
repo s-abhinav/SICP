@@ -1,0 +1,81 @@
+#+Title: Exercise 5.25
+
+Modify the evaluator so that it uses normal-order evaluation, based on the lazy evaluator of section 4-2.
+
+Applicative order
+#+BEGIN_SRC scheme :eval no
+	((application? exp)
+	 (apply (eval (operator exp) env)
+		(list-of-values (operands exp) env)))
+#+END_SRC
+
+Normal order
+#+begin_src  scheme :eval no
+  (define (actual-value exp env)
+    (force-it (eval exp env)))
+
+  (define (force-it obj)
+    (if (thunk? obj)
+        (actual-value (thunk-exp obj) (thunk-env obj))
+        obj))
+
+  ((application? exp)
+   (apply (actual-value (operator exp) env)
+          (operands exp)
+          env))
+#+END_SRC
+
+#+begin_src scheme :session 5-25 :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+
+  ; Guile trap modules
+  (use-modules (system vm trap-state))
+
+  ; (((eceval 'get-register) 'proc) 'trace-toggle)
+  ; (((eceval 'get-register) 'argl) 'trace-toggle)
+  ; (((eceval 'get-register) 'unev) 'trace-toggle)
+  ; ((cadr (assoc 'trace-toggle (eceval 'operations))))
+#+end_src
+
+* Tests
+** Applicative Order
+
+#+begin_src scheme :session 5-25 :exports both :results output verbatim
+  (set! lazy-eval-flag #f)
+
+  (eceval-exp eceval
+  '(define (try a b)
+         (if (= a 0) 1 b)))
+
+  (eceval-exp eceval
+  '(try 0 (/ 1 0)))
+#+end_src
+
+#+RESULTS:
+: ERROR: In procedure /:
+: Throw to key `numerical-overflow' with args `("/" "Numerical overflow" #f #f)'.
+: 
+: Entering a new prompt.  Type `,bt' for a backtrace or `,q' to continue.
+: scheme@(guile-user) [1]>
+
+** Normal Order
+#+NAME: Consequent
+#+begin_src scheme :session 5-25 :exports both :results output verbatim
+  (set! lazy-eval-flag #t)
+
+  (eceval-exp eceval
+  '(try 0 (/ 1 0)))
+#+end_src
+
+#+RESULTS: Consequent
+: 1
+
+#+NAME: Alternate
+#+begin_src scheme :session 5-25 :exports both :results output verbatim
+  (eceval-exp eceval
+  '(try 1 (/ 1 0)))
+#+end_src
+
+#+RESULTS: Alternate
+: (thunk (/ 1 0) (((try false true car cdr cons null? = * / + - < >) (procedure (a b) ((if (= a 0) 1 b)) #-6#) #f #t (primitive #<procedure car (_)>) (primitive #<procedure cdr (_)>) (primitive #<procedure cons (_ _)>) (primitive #<procedure null? (_)>) (primitive #<procedure = (#:optional _ _ . _)>) (primitive #<procedure * (#:optional _ _ . _)>) (primitive #<procedure / (#:optional _ _ . _)>) (primitive #<procedure + (#:optional _ _ . _)>) (primitive #<procedure - (#:optional _ _ . _)>) (primitive #<procedure < (#:optional _ _ . _)>) (primitive #<procedure > (#:optional _ _ . _)>))))

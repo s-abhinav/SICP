@@ -229,6 +229,10 @@
       (cadddr exp)
       'false))
 
+(define lazy-eval-flag #f)
+
+(define (lazy-eval?) lazy-eval-flag)
+
 (define cond-special-form-flag #f)
 
 ;;; Let machine decide which strategy to use
@@ -340,6 +344,7 @@
 	(list 'null? null?)
 	(list '= =)
 	(list '* *)
+    (list '/ /)
 	(list '+ +)
 	(list '- -)
     (list '< <)
@@ -398,6 +403,23 @@
                      '<procedure-env>))
       (display object))
   (newline))
+
+(define (delay-it exp env)
+  (list 'thunk exp env))
+
+(define (thunk? obj)
+  (tagged-list? obj 'thunk))
+
+(define (thunk-exp thunk) (cadr thunk))
+
+(define (thunk-env thunk) (caddr thunk))
+
+(define (list-of-delayed-args exps env)
+  (if (no-operands? exps)
+      '()
+      (cons (delay-it (first-operand exps) env)
+            (list-of-delayed-args (rest-operands exps)
+                                  env))))
 
 (define eceval-operations
   (list (list 'self-evaluating? self-evaluating?)
@@ -462,6 +484,12 @@
         (list 'read read)
         (list 'get-global-environment get-global-environment)
         (list 'user-print user-print)
+        (list 'lazy-eval? lazy-eval?)
+        (list 'delay-it delay-it)
+        (list 'thunk? thunk?)
+        (list 'thunk-exp thunk-exp)
+        (list 'thunk-env thunk-env)
+        (list 'list-of-delayed-args list-of-delayed-args)
         ))
 
 (define ec-eval-controller
@@ -525,6 +553,8 @@
     (save unev)
     (assign exp (op operator) (reg exp))
     (assign continue (label ev-appl-did-operator))
+    (test (op lazy-eval?))
+    (branch (label ev-actual-value))
     (goto (label eval-dispatch))
 
   ev-appl-did-operator
@@ -535,6 +565,8 @@
     (test (op no-operands?) (reg unev))
     (branch (label apply-dispatch))
     (save proc)
+    (test (op lazy-eval?))
+    (branch (label apply-dispatch-lazy))
 
   ev-appl-operand-loop
     (save argl)
@@ -544,6 +576,8 @@
     (save env)
     (save unev)
     (assign continue (label ev-appl-accumulate-arg))
+    (test (op lazy-eval?))
+    (branch (label ev-actual-value))
     (goto (label eval-dispatch))
 
   ev-appl-accumulate-arg
@@ -556,6 +590,8 @@
 
   ev-appl-last-arg
     (assign continue (label ev-appl-accum-last-arg))
+    (test (op lazy-eval?))
+    (branch (label ev-actual-value))
     (goto (label eval-dispatch))
   ev-appl-accum-last-arg
     (restore argl)
@@ -616,6 +652,8 @@
     (save continue)
     (assign continue (label ev-if-decide))
     (assign exp (op if-predicate) (reg exp))
+    (test (op lazy-eval?))
+    (branch (label ev-actual-value))
     (goto (label eval-dispatch))  ; evaluate the predicate
   
   ev-if-decide
@@ -727,6 +765,36 @@
      (op define-variable!) (reg unev) (reg val) (reg env))
     (assign val (const ok))
     (goto (reg continue))
+
+  ev-actual-value
+    (save continue)
+    (save env)
+    (assign continue (label ev-force-it))
+    (goto (label eval-dispatch))
+
+  ev-force-it
+    (test (op thunk?) (reg val))
+    (branch (label ev-force-it-thunk-consequent))
+    (restore continue)
+    (restore env)
+    (goto (reg continue))
+
+  ev-force-it-thunk-consequent
+    (assign exp (op thunk-exp) (reg val))
+    (assign env (op thunk-env) (reg val))
+    (goto (label ev-actual-value))
+
+  apply-dispatch-lazy
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label ev-appl-operand-loop))
+    (test (op compound-procedure?) (reg proc))
+    (branch (label ev-list-of-delayed-args))
+    (goto (label unknown-procedure-type))
+
+  ev-list-of-delayed-args
+    (assign argl (op list-of-delayed-args) (reg unev) (reg env))
+    (restore proc)
+    (goto (label apply-dispatch))
 
   unknown-expression-type
     (assign val (const unknown-expression-type-error))
