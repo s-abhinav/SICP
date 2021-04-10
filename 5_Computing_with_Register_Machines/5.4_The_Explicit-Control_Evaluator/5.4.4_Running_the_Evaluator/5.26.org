@@ -1,0 +1,189 @@
+#+Title: Exercise 5.26
+
+Use the monitored stack to explore the tail-recursive property of the evaluator (section 5-4-2). Start the evaluator and define the iterative ~factorial~ procedure from section 1-2-1
+
+#+begin_src scheme :eval no
+  (define (factorial n)
+    (define (iter product counter)
+      (if (> counter n)
+          product
+          (iter (* counter product)
+                (+ counter 1))))
+    (iter 1 1))
+#+end_src
+
+#+begin_src scheme :session 5-26 :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+Run the procedure with some small values of n. Record the maximum stack depth and the number of pushes required to compute n! for each of these values.
+
+**** a. You will find that the maximum depth required to evaluate n! is independent of n. What is that depth?
+
+List of registers being saved or restored. See [[file:~/SICP/5_Computing_with_Register_Machines/5.2_A_Register-Machine_Simulator/5.12.org][Exercise 5.12]]
+#+begin_src scheme :session 5-26 :exports both
+  ((eceval 'stat) 'stack-operations)
+#+end_src
+
+#+RESULTS:
+| argl | continue | env | exp | proc | unev |
+
+#+begin_src scheme :session 5-26 :exports both :results output verbatim
+  (eceval-exp eceval
+    '(define (factorial n)
+      (define (iter product counter)
+        (if (> counter n)
+            product
+            (iter (* counter product)
+                  (+ counter 1))))
+      (iter 1 1)))
+#+end_src
+
+#+RESULTS:
+: ok
+
+#+begin_src scheme :session 5-26 :exports both :results output verbatim
+  (eceval-exp eceval '(factorial 2))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 3 maximum-depth = 1)
+argl
+(total-pushes = 22 maximum-depth = 2)
+proc
+(total-pushes = 12 maximum-depth = 2)
+unev
+(total-pushes = 24 maximum-depth = 2)
+env
+(total-pushes = 27 maximum-depth = 2)
+continue
+(total-pushes = 16 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+#+begin_src scheme :session 5-26 :exports both :results output verbatim
+  (eceval-exp eceval '(factorial 4))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+24
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 5 maximum-depth = 1)
+argl
+(total-pushes = 38 maximum-depth = 2)
+proc
+(total-pushes = 20 maximum-depth = 2)
+unev
+(total-pushes = 40 maximum-depth = 2)
+env
+(total-pushes = 45 maximum-depth = 2)
+continue
+(total-pushes = 26 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+
+Max depth of any register is 2.
+
+
+**** b. Determine from your data a formula in terms of n for the total number of push operations used in evaluating n! for any n >= 1. Note that the number of operations used is a linear function of n and is thus determined by two constants.
+
+For (factorial 2), total number of push operations is
+#+begin_src scheme :session 5-26 :exports both
+  (+ 0 3 22 12 24 27 16 0 0)
+#+end_src
+
+#+RESULTS:
+: 104
+
+For (factorial 4)
+#+begin_src scheme :session 5-26 :exports both
+  (+ 0 5 38 20 40 45 26 0 0)
+#+end_src
+
+#+RESULTS:
+: 174
+
+Hence,
+2x + c = 104
+4x + c = 174
+
+2x is 70, x is 35
+#+begin_src scheme :session 5-26 :exports both
+(- 174 104)
+#+END_SRC
+
+#+RESULTS:
+: 70
+
+70 + c = 104
+c is 34
+
+Therefore, the formula is ~35n + 34~
+
+For n = 5
+
+#+begin_src scheme :session 5-26 :exports both :results output verbatim
+(eceval-exp eceval '(factorial 5))
+#+end_src
+
+#+RESULTS:
+: 120
+
+#+begin_src scheme :session 5-26 :exports both :results replace output raw
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 6 maximum-depth = 1)
+argl
+(total-pushes = 46 maximum-depth = 2)
+proc
+(total-pushes = 24 maximum-depth = 2)
+unev
+(total-pushes = 48 maximum-depth = 2)
+env
+(total-pushes = 54 maximum-depth = 2)
+continue
+(total-pushes = 31 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+
+#+begin_src scheme :session 5-26 :exports both
+(+ 0 6 46 24 48 54 31 0 0)
+#+end_src
+
+#+RESULTS:
+: 209
+
+Using the formula,
+#+begin_src scheme :session 5-26 :exports both
+  (+ (* 35 5) 34)
+#+end_src
+
+#+RESULTS:
+: 209
+
+We arrived at the same total number of pushes for n = 5 using the derived formula.
