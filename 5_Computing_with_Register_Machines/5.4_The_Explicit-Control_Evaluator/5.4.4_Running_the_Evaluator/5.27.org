@@ -1,0 +1,139 @@
+#+Title: Exercise 5.27
+
+For comparison with [[file:5.26.org][Exercise 5.26]] explore the behavior of the following procedure for computing factorials recursively:
+#+begin_src scheme :eval no
+  (define (factorial n)
+    (if (= n 1)
+        1
+        (* (factorial (- n 1)) n)))
+
+#+end_src
+
+By running this procedure with the monitored stack, determine, as a function of n, the maximum depth of the stack and the total number of pushes used in evaluating n! for n >= 1. (Again, these functions will be linear.)  Summarize your experiments by filling in the following table with the appropriate expressions in terms of n:
+
+| *Process*             | *Maximum Depth* | *Number of pushes* |
+|---------------------+---------------+------------------|
+| *Recursive factorial* | n + 1         | 16 (2n - 1)      |
+| *Iterative factorial* | 2             | 35n + 34         |
+
+The maximum depth is a measure of the amount of space used by the evaluator in carrying out the computation, and the number of pushes correlates well with the time required.
+
+#+begin_src scheme :session 5-27 :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+#+begin_src scheme :session 5-27 :results output raw :exports both
+  (eceval-exp eceval
+    '(define (factorial n)
+      (if (= n 1)
+          1
+          (* (factorial (- n 1)) n))))
+
+  (eceval-exp eceval '(factorial 2))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+ok
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 2 maximum-depth = 1)
+argl
+(total-pushes = 10 maximum-depth = 3)
+proc
+(total-pushes = 6 maximum-depth = 3)
+unev
+(total-pushes = 10 maximum-depth = 2)
+env
+(total-pushes = 12 maximum-depth = 3)
+continue
+(total-pushes = 8 maximum-depth = 3)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+
+Total number of pushes
+
+#+begin_src scheme :session 5-27 
+(+ 0 2 10 6 10 12 8 0 0)
+#+end_src
+
+#+RESULTS:
+: 48
+
+#+begin_src scheme :session 5-27 :results output raw
+  (eceval-exp eceval '(factorial 3))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+ok
+6
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 3 maximum-depth = 1)
+argl
+(total-pushes = 17 maximum-depth = 4)
+proc
+(total-pushes = 10 maximum-depth = 4)
+unev
+(total-pushes = 17 maximum-depth = 3)
+env
+(total-pushes = 20 maximum-depth = 4)
+continue
+(total-pushes = 13 maximum-depth = 4)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+
+Pushes for n = 3
+#+begin_src scheme :session 5-27 :exports both
+(+ 0 3 17 10 17 20 13 0 0)
+#+end_src
+
+#+RESULTS:
+: 80
+
+Total number of pushes for n = 4: 
+
+#+begin_src scheme :session 5-27 :exports both
+(+ 0 4 24 14 24 28 18 0 0)
+#+end_src
+
+#+RESULTS:
+: 112
+
+Pushes for n = 5
+#+begin_src scheme :session 5-27 :exports both
+(+ 0 5 31 18 31 36 23 0 0)
+#+end_src
+
+#+RESULTS:
+: 144
+
+n = 1 ->  x + 0x = 16
+n = 2 ->  2x + x = 48
+n = 3 ->  3x + 2x = 80
+n = 4 ->  4x + 3x = 112
+
+1 = 16.n
+2 = 16.3n
+3 = 16.5n
+4 = 16.7n
+n = 16 (2n - 1)
+
+Using the formula to calculate the number of pushes when n = 5
+#+begin_src scheme :session 5-27 :exports both
+(* 16 (- (* 2 5) 1))
+#+end_src
+
+#+RESULTS:
+: 144
+
+gives the same result as the actual number of pushes using machine's statistics.
