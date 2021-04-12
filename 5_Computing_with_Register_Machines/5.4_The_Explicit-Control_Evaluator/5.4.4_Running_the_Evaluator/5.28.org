@@ -1,0 +1,187 @@
+#+Title: Exercise 5.28
+#+PROPERTY: header-args:scheme :session 5-28 :exports both :results output verbatim replace
+
+Modify the definition of the evaluator by changing ~eval-sequence~ as described in 5-4-2 so that the evaluator is no longer tail-recursive. Rerun your experiments from Exercise 5-26 and Exercise 5-27 to demonstrate that both versions of the ~factorial~ procedure now require space that grows linearly with their input.
+
+#+begin_src scheme :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+
+#+end_src
+
+* Experiments
+** Exercise 5.26, iterative factorial
+*** Test tail-recursive-flag
+The result should be the same as Exercise 5.26
+#+begin_src scheme
+  (eceval-exp eceval
+    '(define (factorial n)
+      (define (iter product counter)
+        (if (> counter n)
+            product
+            (iter (* counter product)
+                  (+ counter 1))))
+      (iter 1 1)))
+
+  (eceval-exp eceval '(factorial 2))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ok
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 3 maximum-depth = 1)
+argl
+(total-pushes = 22 maximum-depth = 2)
+proc
+(total-pushes = 12 maximum-depth = 2)
+unev
+(total-pushes = 24 maximum-depth = 2)
+env
+(total-pushes = 27 maximum-depth = 2)
+continue
+(total-pushes = 16 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+#+begin_src scheme
+  (eceval-exp eceval '(factorial 4))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+24
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 5 maximum-depth = 1)
+argl
+(total-pushes = 38 maximum-depth = 2)
+proc
+(total-pushes = 20 maximum-depth = 2)
+unev
+(total-pushes = 40 maximum-depth = 2)
+env
+(total-pushes = 45 maximum-depth = 2)
+continue
+(total-pushes = 26 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+Result is the same with new code.
+
+*** Test tail-resursive-flag set to false
+
+#+begin_src scheme
+  (define tail-recursive-flag #f)
+
+  (eceval-exp eceval '(factorial 4))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+24
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 5 maximum-depth = 1)
+argl
+(total-pushes = 38 maximum-depth = 2)
+proc
+(total-pushes = 20 maximum-depth = 2)
+unev
+(total-pushes = 47 maximum-depth = 8)
+env
+(total-pushes = 52 maximum-depth = 9)
+continue
+(total-pushes = 26 maximum-depth = 9)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+Compared with [[file:5.26.org::*a. You will find that the maximum depth required to evaluate n! is independent of n. What is that depth?][Exercise 5.26, part a.]], the depth is indeed increasing with increasing value of n with tail recursion turned off.
+
+** Exercise 5.27, recursive factorial
+#+begin_src scheme
+  (eceval-exp eceval
+    '(define (factorial n)
+      (if (= n 1)
+          1
+          (* (factorial (- n 1)) n))))
+
+  (eceval-exp eceval '(factorial 2))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ok
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 2 maximum-depth = 1)
+argl
+(total-pushes = 10 maximum-depth = 3)
+proc
+(total-pushes = 6 maximum-depth = 3)
+unev
+(total-pushes = 12 maximum-depth = 4)
+env
+(total-pushes = 14 maximum-depth = 5)
+continue
+(total-pushes = 8 maximum-depth = 5)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+#+begin_src scheme
+  (eceval-exp eceval '(factorial 3))
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+6
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 4 maximum-depth = 1)
+argl
+(total-pushes = 30 maximum-depth = 2)
+proc
+(total-pushes = 16 maximum-depth = 2)
+unev
+(total-pushes = 38 maximum-depth = 7)
+env
+(total-pushes = 42 maximum-depth = 8)
+continue
+(total-pushes = 21 maximum-depth = 8)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+In the recursive process case, it's interesting to note that the non recursive process performs worse in the absense of tail recursion.
+
+Even if a recursive process is not tail call optimized, it will be more efficient with a tail recursive machine.

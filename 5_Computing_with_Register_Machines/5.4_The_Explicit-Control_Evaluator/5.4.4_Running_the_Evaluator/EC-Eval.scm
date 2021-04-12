@@ -421,6 +421,10 @@
             (list-of-delayed-args (rest-operands exps)
                                   env))))
 
+(define tail-recursive-flag #t)
+
+(define (tail-recursive?) tail-recursive-flag)
+
 (define eceval-operations
   (list (list 'self-evaluating? self-evaluating?)
         (list 'empty-arglist empty-arglist)
@@ -490,6 +494,7 @@
         (list 'thunk-exp thunk-exp)
         (list 'thunk-env thunk-env)
         (list 'list-of-delayed-args list-of-delayed-args)
+        (list 'tail-recursive? tail-recursive?)
         ))
 
 (define ec-eval-controller
@@ -629,6 +634,16 @@
     (goto (label ev-sequence))
 
   ev-sequence
+    (test (op tail-recursive?))
+    (branch (label ev-sequence-tail-recursive))
+    (test (op no-more-exps?) (reg unev))
+    (branch (label ev-sequence-end))
+    (assign exp (op first-exp) (reg unev))
+    (save unev)
+    (save env)
+    (assign continue (label ev-sequence-continue))
+    (goto (label eval-dispatch))
+  ev-sequence-tail-recursive
     (assign exp (op first-exp) (reg unev))
     (test (op last-exp?) (reg unev))
     (branch (label ev-sequence-last-exp))
@@ -644,6 +659,10 @@
   ev-sequence-last-exp
     (restore continue)
     (goto (label eval-dispatch))
+  ev-sequence-end
+    (restore continue)
+    (goto (reg continue))
+
 
   ;;; Conditionals, Assignments, and Definitions
   ev-if
