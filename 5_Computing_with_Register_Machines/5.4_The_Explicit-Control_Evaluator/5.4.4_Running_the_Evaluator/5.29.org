@@ -1,0 +1,272 @@
+#+Title: Exercise 5.29
+#+PROPERTY: header-args:scheme :session 5-29 :exports both :results output verbatim replace
+
+Monitor the stack operations in the tree-recursive Fibonacci computation:
+
+#+begin_src scheme :eval no
+  (define (fib n)
+    (if (< n 2)
+        n
+        (+ (fib (- n 1)) (fib (- n 2)))))
+#+end_src
+
+* a. Give a formula in terms of n for the maximum depth of the stack required to compute Fib (n) for n >= 2. Hint: In section 1-2-2 we argued that the space used by this process grows linearly with n.
+
+#+begin_src scheme :exports none :results silent
+  (add-to-load-path (dirname "../5.4.4_Running_the_Evaluator"))
+  (load "../5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+#+begin_src scheme
+  (eceval-exp
+   eceval
+   '(define (fib n)
+      (if (< n 2)
+          n
+          (+ (fib (- n 1)) (fib (- n 2))))))
+#+END_SRC
+
+Fib (1)
+#+begin_src scheme
+  (eceval-exp eceval '(fib 1))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+1
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 1 maximum-depth = 1)
+argl
+(total-pushes = 3 maximum-depth = 1)
+proc
+(total-pushes = 2 maximum-depth = 1)
+unev
+(total-pushes = 3 maximum-depth = 1)
+env
+(total-pushes = 4 maximum-depth = 2)
+continue
+(total-pushes = 3 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+max depth = 2
+total pushes =
+
+#+begin_src scheme :results output value
+(+ 1 3 2 3 4 3 0 0)
+#+end_src
+
+#+RESULTS:
+: 16
+
+Fib (2)
+#+BEGIN_SRC scheme 
+  (eceval-exp eceval '(fib 2))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ok
+1
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 3 maximum-depth = 1)
+argl
+(total-pushes = 15 maximum-depth = 3)
+proc
+(total-pushes = 9 maximum-depth = 3)
+unev
+(total-pushes = 15 maximum-depth = 2)
+env
+(total-pushes = 18 maximum-depth = 3)
+continue
+(total-pushes = 12 maximum-depth = 3)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+** For Fib (2), 
+total pushes =
+#+begin_src scheme :exports both :results output value 
+(+ 0 3 15 9 15 18 12 0 0)
+#+end_src
+
+#+RESULTS:
+: 72
+
+max depth = 3
+
+** Fib (3)
+#+begin_src scheme
+  (eceval-exp eceval '(fib 3))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 5 maximum-depth = 1)
+argl
+(total-pushes = 27 maximum-depth = 4)
+proc
+(total-pushes = 16 maximum-depth = 4)
+unev
+(total-pushes = 27 maximum-depth = 3)
+env
+(total-pushes = 32 maximum-depth = 4)
+continue
+(total-pushes = 21 maximum-depth = 4)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+total pushes =
+#+begin_src scheme :results output value
+(+ 0 5 27 16 27 32 21 0 0)
+#+end_src
+
+#+RESULTS:
+: 128
+
+max depth = 4
+
+
+** Fib (4)
+#+begin_src scheme
+  (eceval-exp eceval '(fib 4))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+3
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 9 maximum-depth = 1)
+argl
+(total-pushes = 51 maximum-depth = 5)
+proc
+(total-pushes = 30 maximum-depth = 5)
+unev
+(total-pushes = 51 maximum-depth = 4)
+env
+(total-pushes = 60 maximum-depth = 5)
+continue
+(total-pushes = 39 maximum-depth = 5)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+total pushes =
+#+begin_src scheme :results output value
+(+ 9 51 30 51 60 39 0 0)
+#+end_src
+
+#+RESULTS:
+: 240
+
+max depth = 5
+
+** Fib (5)
+#+begin_src scheme
+  (eceval-exp eceval '(fib 5))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+5
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 15 maximum-depth = 1)
+argl
+(total-pushes = 87 maximum-depth = 6)
+proc
+(total-pushes = 51 maximum-depth = 6)
+unev
+(total-pushes = 87 maximum-depth = 5)
+env
+(total-pushes = 102 maximum-depth = 6)
+continue
+(total-pushes = 66 maximum-depth = 6)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+max depth = 6
+total pushes =
+#+begin_src scheme :results output value
+(+ 15 87 51 87 102 66 0 0)
+#+end_src
+
+#+RESULTS:
+: 408
+
+** Formula for max depth
+n + 1
+
+* b. Give a formula for the total number of pushes used to compute Fib (n) for n >= 2. You should find that the number of pushes (which correlates well with the time used) grows exponentially with n. Hint: Let S(n) be the number of pushes used in computing Fib (n).  You should be able to argue that there is a formula that expresses S(n) in terms of S(n - 1), S(n - 2), and some fixed "overhead" constant k that is independent of n. Give the formula, and say what k is. Then show that S(n) can be expressed as a Fib (n + 1) + b and give the values of a and b.
+
+** Formula for total number of pushes
+| S(n) | fib | Pushes | Push diff |
+|------+-----+--------+-----------|
+|    1 |   1 |     16 |         0 |
+|    2 |   1 |     72 |        56 |
+|    3 |   2 |    128 |        56 |
+|    4 |   3 |    240 |       112 |
+|    5 |   5 |    408 |       168 |
+
+S(n) = S(n - 1) + S(n - 2) + k
+
+S(2 - 1) + S(2 - 2) + k = 72
+S(1) + k = 72
+16 + k = 72
+k = 56
+
+
+S(n) = a.fib(n + 1) + b
+S(3) = a.3 + b = 128
+S(4) = a.5 + b = 240
+S(5) = a.8 + b = 408
+
+a.5 - a.3 = 240 - 128
+a.2 = 112
+a = 56
+
+S(3) = 56 * 3 + b = 128
+168 + b = 128
+b = 128 - 168
+b = -40
+
+*** The Formula
+S(n) = 56.fib(n + 1) - 40
+
+** Test
+S(5) = 56 * 8 - 40 = 408
+
