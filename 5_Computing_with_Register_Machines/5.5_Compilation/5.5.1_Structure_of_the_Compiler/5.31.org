@@ -1,0 +1,24 @@
+#+Title: Exercise 5.31
+
+In evaluating a procedure application, the explicit-control evaluator always:
+
+1. saves and restores the ~env~ register around the evaluation of the operator,
+2. saves and restores ~env~ around the evaluation of each operand (except the final one),
+3. saves and restores ~argl~ around the evaluation of each operand,
+4. and saves and restores ~proc~ around the evaluation of the operand sequence.
+
+   For each of the following combinations, say which of these ~save~ and ~restore~ operations are superfluous and thus could be eliminated by the compiler's ~preserving~ mechanism:
+
+** (f 'x 'y)
+2. Since 'x and 'y will not be modifying env as they are self evaluating.
+3. Same as 2.
+4. Same as 2.
+
+** ((f) 'x 'y)
+Same as above.
+
+** (f (g 'x) y)
+Every operation is required.
+
+** (f (g 'x) 'y)
+Every operation is required.
