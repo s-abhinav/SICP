@@ -432,6 +432,7 @@
         (list 'last-operand? last-operand?)
         (list 'no-more-exps? no-more-exps?)
         (list 'variable? variable?)
+        (list 'symbol? symbol?)
         (list 'quoted? quoted?)
         (list 'car car)
         (list 'cdr cdr)
@@ -553,10 +554,13 @@
   ;;; Evaluating procedure applications
   ev-application
     (save continue)
-    (save env)
     (assign unev (op operands) (reg exp))
     (save unev)
     (assign exp (op operator) (reg exp))
+    (test (op symbol?) (reg exp))
+    (branch (label ev-application-not-preserve))
+    (save env)
+  ev-application-not-preserve
     (assign continue (label ev-appl-did-operator))
     (test (op lazy-eval?))
     (branch (label ev-actual-value))
@@ -564,7 +568,10 @@
 
   ev-appl-did-operator
     (restore unev)                         ; the operands
+    (test (op symbol?) (reg exp))
+    (branch (label ev-appl-did-operator-not-preserve))
     (restore env)
+  ev-appl-did-operator-not-preserve
     (assign argl (op empty-arglist))
     (assign proc (reg val))                ; the operator
     (test (op no-operands?) (reg unev))

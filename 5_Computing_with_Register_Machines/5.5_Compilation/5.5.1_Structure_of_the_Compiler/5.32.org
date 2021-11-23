@@ -1,0 +1,61 @@
+#+Title: Exercise 5.32
+#+PROPERTY: header-args:scheme :session 5-32 :exports both :results output verbatim replace
+
+Using the ~preserving~ mechanism, the compiler will avoid saving and restoring ~env~ around the evaluation of the operator of a combination in the case where the operator is a symbol. We could also build such optimizations into the evaluator. Indeed, the explicit-control evaluator of section 5-4 already performs a similar optimization, by treating combinations with no operands as a special case.
+
+**** a. Extend the explicit-control evaluator to recognize as a separate class of expressions combinations whose operator is a symbol, and to take advantage of this fact in evaluating such expressions.
+
+To illustrate the difference in efficiency in stack operations for the env register with this new change, let's take a look at the stat of (factorial 2) without using the preserving mechanism.
+
+In exercise 5.28, for (factorial 2), the number of pushes for env was 27.
+
+The number of pushes for env using the preserving mechanism is now 16.
+
+#+begin_src scheme :exports none :results silent
+  (add-to-load-path (dirname "../../5.4_The_Explicit-Control_Evaluator/5.4.4_Running_the_Evaluator"))
+  (load "../../5.4_The_Explicit-Control_Evaluator/5.4.4_Running_the_Evaluator/EC-Eval.scm")
+#+end_src
+
+#+begin_src scheme
+  (eceval-exp eceval
+   '(define (factorial n)
+      (define (iter product counter)
+        (if (> counter n)
+            product
+            (iter (* counter product)
+                  (+ counter 1))))
+      (iter 1 1)))
+
+  (eceval-exp eceval '(factorial 2))
+
+  (((eceval 'stack) 'print-statistics))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ok
+2
+val
+(total-pushes = 0 maximum-depth = 0)
+exp
+(total-pushes = 3 maximum-depth = 1)
+argl
+(total-pushes = 22 maximum-depth = 2)
+proc
+(total-pushes = 12 maximum-depth = 2)
+env
+(total-pushes = 16 maximum-depth = 2)
+unev
+(total-pushes = 24 maximum-depth = 2)
+continue
+(total-pushes = 16 maximum-depth = 2)
+flag
+(total-pushes = 0 maximum-depth = 0)
+pc
+(total-pushes = 0 maximum-depth = 0)
+#+end_example
+
+
+**** b. Alyssa P. Hacker suggests that by extending the evaluator to recognize more and more special cases we could incorporate all the compiler's optimizations, and that this would eliminate the advantage of compilation altogether. What do you think of this idea?
+
+Alyssa's idea could indeed be used to make the evaluator more efficient, however, in doing so, we lose the flexibility of interactive program development and debugging which the evaluator provides. See section 5.5 Compilation, paragraph 6 in the book.
