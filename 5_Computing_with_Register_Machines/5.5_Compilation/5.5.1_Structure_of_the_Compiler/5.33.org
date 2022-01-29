@@ -1,0 +1,363 @@
+#+Title: Exercise 5.33
+#+PROPERTY: header-args:scheme :session 5-33 :exports both :results ouput code replace
+
+Consider the following definition of a factorial procedure, which is slightly different from the one given above:
+
+#+begin_src scheme :eval no 
+  (define (factorial-alt n)
+    (if (= n 1)
+        1
+        (* n (factorial-alt (- n 1)))))
+#+end_src
+
+Compile this procedure and compare the resulting code with that produced for ~factorial~.
+#+begin_src scheme :results silent :exports none
+  (add-to-load-path (dirname "./"))
+  (load "../compiler.scm")
+  (use-modules (ice-9 pretty-print))
+#+end_src
+
+* factorial 
+#+begin_src scheme
+  (compile
+   '(define (factorial n)
+      (if (= n 1)
+          1
+          (* (factorial (- n 1)) n)))
+   'val 'next)
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+  ((env) (val)
+   ((assign val (op make-compiled-procedure) (label entry205) (reg env))
+    (goto (label after-lambda206))
+    entry205
+    (assign env (op compiled-procedure-env) (reg proc))
+    (assign env (op extend-environment) (const (n)) (reg argl) (reg env))
+    (save continue)
+    (save env)
+    (assign proc (op lookup-variable-value) (const =) (reg env))
+    (assign val (const 1))
+    (assign argl (op list) (reg val))
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch210))
+    compiled-branch211
+    (assign continue (label after-call212))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch210
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call212
+    (restore env)
+    (restore continue)
+    (test (op false?) (reg val))
+    (branch (label false-branch208))
+    true-branch207
+    (assign val (const 1))
+    (goto (reg continue))
+    false-branch208
+    (assign proc (op lookup-variable-value) (const *) (reg env))
+    (save continue)
+    (save proc)
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op list) (reg val))
+    (save argl)
+    (assign proc (op lookup-variable-value) (const factorial) (reg env))
+    (save proc)
+    (assign proc (op lookup-variable-value) (const -) (reg env))
+    (assign val (const 1))
+    (assign argl (op list) (reg val))
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch213))
+    compiled-branch214
+    (assign continue (label after-call215))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch213
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call215
+    (assign argl (op list) (reg val))
+    (restore proc)
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch216))
+    compiled-branch217
+    (assign continue (label after-call218))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch216
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call218
+    (restore argl)
+    (assign argl (op cons) (reg val) (reg argl))
+    (restore proc)
+    (restore continue)
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch219))
+    compiled-branch220
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch219
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    (goto (reg continue))
+    after-call221
+    after-if209
+    after-lambda206
+    (perform (op define-variable!) (const factorial) (reg val) (reg env))
+    (assign val (const ok))))
+#+end_src
+
+
+* factorial-alt
+#+begin_src scheme
+  (compile
+   '(define (factorial-alt n)
+      (if (= n 1)
+          1
+          (* n (factorial-alt (- n 1)))))
+   'val 'next)
+#+end_src
+
+#+RESULTS:
+#+begin_src scheme
+  ((env) (val)
+   ((assign val (op make-compiled-procedure) (label entry222) (reg env))
+    (goto (label after-lambda223))
+    entry222
+    (assign env (op compiled-procedure-env) (reg proc))
+    (assign env (op extend-environment) (const (n)) (reg argl) (reg env))
+    (save continue)
+    (save env)
+    (assign proc (op lookup-variable-value) (const =) (reg env))
+    (assign val (const 1))
+    (assign argl (op list) (reg val))
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch227))
+    compiled-branch228
+    (assign continue (label after-call229))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch227
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call229
+    (restore env)
+    (restore continue)
+    (test (op false?) (reg val))
+    (branch (label false-branch225))
+    true-branch224
+    (assign val (const 1))
+    (goto (reg continue))
+    false-branch225
+    (assign proc (op lookup-variable-value) (const *) (reg env))
+    (save continue)
+    (save proc)
+    (save env)
+    (assign proc (op lookup-variable-value) (const factorial-alt) (reg env))
+    (save proc)
+    (assign proc (op lookup-variable-value) (const -) (reg env))
+    (assign val (const 1))
+    (assign argl (op list) (reg val))
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch230))
+    compiled-branch231
+    (assign continue (label after-call232))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch230
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call232
+    (assign argl (op list) (reg val))
+    (restore proc)
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch233))
+    compiled-branch234
+    (assign continue (label after-call235))
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch233
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    after-call235
+    (assign argl (op list) (reg val))
+    (restore env)
+    (assign val (op lookup-variable-value) (const n) (reg env))
+    (assign argl (op cons) (reg val) (reg argl))
+    (restore proc)
+    (restore continue)
+    (test (op primitive-procedure?) (reg proc))
+    (branch (label primitive-branch236))
+    compiled-branch237
+    (assign val (op compiled-procedure-entry) (reg proc))
+    (goto (reg val))
+    primitive-branch236
+    (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+    (goto (reg continue))
+    after-call238
+    after-if226
+    after-lambda223
+    (perform (op define-variable!) (const factorial-alt) (reg val) (reg env))
+    (assign val (const ok))))
+#+end_src
+
+* Explain any differences you find.
+
+The following is the full diff of the compiled procedure, with the --- being factorial-alt.
+
+#+BEGIN_SRC diff
+--- #<buffer *Org Src 5.33.org[ scheme ]*<2>>
++++ #<buffer *Org Src 5.33.org[ scheme ]*>
+@@ -1,7 +1,7 @@
+ ((env) (val)
+- ((assign val (op make-compiled-procedure) (label entry222) (reg env))
+-  (goto (label after-lambda223))
+-  entry222
++ ((assign val (op make-compiled-procedure) (label entry205) (reg env))
++  (goto (label after-lambda206))
++  entry205
+   (assign env (op compiled-procedure-env) (reg proc))
+   (assign env (op extend-environment) (const (n)) (reg argl) (reg env))
+   (save continue)
+@@ -12,27 +12,29 @@
+   (assign val (op lookup-variable-value) (const n) (reg env))
+   (assign argl (op cons) (reg val) (reg argl))
+   (test (op primitive-procedure?) (reg proc))
+-  (branch (label primitive-branch227))
+-  compiled-branch228
+-  (assign continue (label after-call229))
++  (branch (label primitive-branch210))
++  compiled-branch211
++  (assign continue (label after-call212))
+   (assign val (op compiled-procedure-entry) (reg proc))
+   (goto (reg val))
+-  primitive-branch227
++  primitive-branch210
+   (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+-  after-call229
++  after-call212
+   (restore env)
+   (restore continue)
+   (test (op false?) (reg val))
+-  (branch (label false-branch225))
+-  true-branch224
++  (branch (label false-branch208))
++  true-branch207
+   (assign val (const 1))
+   (goto (reg continue))
+-  false-branch225
++  false-branch208
+   (assign proc (op lookup-variable-value) (const *) (reg env))
+   (save continue)
+   (save proc)
+-  (save env)
+-  (assign proc (op lookup-variable-value) (const factorial-alt) (reg env))
++  (assign val (op lookup-variable-value) (const n) (reg env))
++  (assign argl (op list) (reg val))
++  (save argl)
++  (assign proc (op lookup-variable-value) (const factorial) (reg env))
+   (save proc)
+   (assign proc (op lookup-variable-value) (const -) (reg env))
+   (assign val (const 1))
+@@ -40,41 +42,39 @@
+   (assign val (op lookup-variable-value) (const n) (reg env))
+   (assign argl (op cons) (reg val) (reg argl))
+   (test (op primitive-procedure?) (reg proc))
+-  (branch (label primitive-branch230))
+-  compiled-branch231
+-  (assign continue (label after-call232))
++  (branch (label primitive-branch213))
++  compiled-branch214
++  (assign continue (label after-call215))
+   (assign val (op compiled-procedure-entry) (reg proc))
+   (goto (reg val))
+-  primitive-branch230
++  primitive-branch213
+   (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+-  after-call232
++  after-call215
+   (assign argl (op list) (reg val))
+   (restore proc)
+   (test (op primitive-procedure?) (reg proc))
+-  (branch (label primitive-branch233))
+-  compiled-branch234
+-  (assign continue (label after-call235))
++  (branch (label primitive-branch216))
++  compiled-branch217
++  (assign continue (label after-call218))
+   (assign val (op compiled-procedure-entry) (reg proc))
+   (goto (reg val))
+-  primitive-branch233
++  primitive-branch216
+   (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+-  after-call235
+-  (assign argl (op list) (reg val))
+-  (restore env)
+-  (assign val (op lookup-variable-value) (const n) (reg env))
++  after-call218
++  (restore argl)
+   (assign argl (op cons) (reg val) (reg argl))
+   (restore proc)
+   (restore continue)
+   (test (op primitive-procedure?) (reg proc))
+-  (branch (label primitive-branch236))
+-  compiled-branch237
++  (branch (label primitive-branch219))
++  compiled-branch220
+   (assign val (op compiled-procedure-entry) (reg proc))
+   (goto (reg val))
+-  primitive-branch236
++  primitive-branch219
+   (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+   (goto (reg continue))
+-  after-call238
+-  after-if226
+-  after-lambda223
+-  (perform (op define-variable!) (const factorial-alt) (reg val) (reg env))
++  after-call221
++  after-if209
++  after-lambda206
++  (perform (op define-variable!) (const factorial) (reg val) (reg env))
+   (assign val (const ok))))
+#+end_src
+
+The main differences between the two are in these blocks
+
+#+BEGIN_SRC diff
+   (assign proc (op lookup-variable-value) (const *) (reg env))
+   (save continue)
+   (save proc)
+-  (save env)
+-  (assign proc (op lookup-variable-value) (const factorial-alt) reg env))
++  (assign val (op lookup-variable-value) (const n) (reg env))
++  (assign argl (op list) (reg val))
++  (save argl)
++  (assign proc (op lookup-variable-value) (const factorial) (reg env))
+   (save proc)
+   (assign proc (op lookup-variable-value) (const -) (reg env))
+   (assign val (const 1))
+#+END_SRC
+
+#+BEGIN_SRC diff
+-  primitive-branch233
++  primitive-branch216
+   (assign val (op apply-primitive-procedure) (reg proc) (reg argl))
+-  after-call235
+-  (assign argl (op list) (reg val))
+-  (restore env)
+-  (assign val (op lookup-variable-value) (const n) (reg env))
++  after-call218
++  (restore argl)
+   (assign argl (op cons) (reg val) (reg argl))
+
+#+END_SRC
+
+This is due to the way that the evaluation of the arguments of the procedure ~*~ takes place. In ~factorial~, the rightmost n variable is looked up and evaluated first, as opposed to ~factorial-alt~ where it is done last.
+
+* Does either program execute more efficiently than the other?
+Based on the above differences, it does not look like any version is more efficient than the other.
