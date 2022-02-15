@@ -12,10 +12,34 @@
 ;;;;Then you can compile Scheme programs as shown in section 5.5.5
 
 ;;**implementation-dependent loading of syntax procedures
-(load "syntax.scm")			;section 4.1.2 syntax procedures
-
+;; Disable loading of scm files here.
+;; Guile is compiling the whole file first except (load "syntax.scm"),
+;; which is causing the compiler to not find definitions of self-evaluating?
+;; quoted? and all of the conditional syntax except variable? which is already
+;; defined as part of Guile Scheme. This is in turn causing compilations to fail
+;; by bypassing the syntax's variable? and instead using Guile's variable?.
+; (load "syntax.scm")			;section 4.1.2 syntax procedures
 
 ;;;SECTION 5.5.1
+
+;; Returns an instance of the configuration.
+;; Use a dispatcher configuration so as not to pollute the vm with variable definitions.
+;; Example:
+;; (define compiler-config (configure-compiler))
+;; (compiler-config 'preserving?) => #t
+;; (compiler-config 'preserving? false) => sets preserving to false.
+(define (configure-compiler)
+  (define preserving? true)
+  (lambda (m . args)
+    (cond ((eq? m 'preserving?)
+           (if (null? args)
+               preserving?
+               (begin
+                 (set! preserving? (car args))
+                 'ok)))
+          (else (error "Unknown method" m " -- configure-compiler")))))
+
+(define compiler-config (configure-compiler))
 
 (define (compile exp target linkage)
   (cond ((self-evaluating? exp)
@@ -349,8 +373,10 @@
   (if (null? regs)
       (append-instruction-sequences seq1 seq2)
       (let ((first-reg (car regs)))
-        (if (and (needs-register? seq2 first-reg)
-                 (modifies-register? seq1 first-reg))
+        ; if the compiler is not using the preserving optimization, always save and restore
+        (if (or (not (compiler-config 'preserving?))
+             (and (needs-register? seq2 first-reg)
+                     (modifies-register? seq1 first-reg)))
             (preserving (cdr regs)
              (make-instruction-sequence
               (list-union (list first-reg)

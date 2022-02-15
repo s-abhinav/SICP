@@ -13,6 +13,7 @@ Consider the following definition of a factorial procedure, which is slightly di
 Compile this procedure and compare the resulting code with that produced for ~factorial~.
 #+begin_src scheme :results silent :exports none
   (add-to-load-path (dirname "./"))
+  (load "../syntax.scm")
   (load "../compiler.scm")
   (use-modules (ice-9 pretty-print))
 #+end_src
