@@ -1,0 +1,17 @@
+#+Title: Exercise 5.36
+**** What order of evaluation does our compiler produce for operands of a combination? Is it left-to-right, right-to-left, or some other order? Where in the compiler is this order determined?
+- right-to-left.
+- In construct-arglist of compiler.scm, first line, it reverses the order of operand-codes, where the order of operand-codes being passed into construct-arglist is the left-to-right order built using ~map~ for exp.
+
+**** Modify the compiler so that it produces some other order of evaluation. (See the discussion of order of evaluation for the explicit-control evaluator in section *Note5-4-1)
+I could to this modification by changing
+~(let ((operand-codes (reverse operand-codes)))~ to ~(let ((operand-codes operand-codes))~ followed by also changing the definition of ~code-to-get-last-arg~ so that it iterates over operand-codes until it reaches the last arg instead of ~(car operand-codes)~.
+
+I don't see the need to actually make this change in compiler.scm yet. However, this can be done later if required in future exercises.
+
+**** How does changing the order of operand evaluation affect the efficiency of the code that constructs the argument list?
+As described in the answer above, code-to-get-last-arg will have to iterate over the argument list to get the last arg for every procedure. This does eventually slow down the compilation process.
+
+After having gone through earlier chapters in the book where the topic of the order of evaluation of arguments comes up, I now realize the importance of the order of evaluation. In the case of Scheme, getting the last element in the list requires a full iteration over the list.
+
+A list access having an /order of growth/ of O(1) would make the order of evaluation of arguments irrelevant.

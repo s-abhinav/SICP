@@ -1,0 +1,126 @@
+#+Title: Exercise 5.37
+#+PROPERTY: header-args:scheme :session 5-37 :exports both :results ouput verbatim
+
+One way to understand the compiler's ~preserving~ mechanism for optimizing stack usage is to see what extra operations would be generated if we did not use this idea.
+
+#+begin_src scheme :results silent :exports none
+  (add-to-load-path (dirname "./"))
+  (load "../syntax.scm")
+  (load "../compiler.scm")
+  (use-modules (ice-9 pretty-print))
+#+end_src
+
+**** Modify ~preserving~ so that it always generates the ~save~ and ~restore~ operations.
+#+begin_src scheme :exports both
+  ;; disable preserving optimization. See compiler-config in compiler.scm.
+  (compiler-config 'preserving? #f)
+#+end_src
+
+#+RESULTS:
+: ok
+
+**** Compile some simple expressions and identify the unnecessary stack operations that are generated.
+#+begin_src scheme :exports both :results output verbatim
+  (pretty-print
+   (compile
+   '(+ 1 1)
+    'val
+    'next))
+#+end_src
+
+#+RESULTS:
+#+begin_example
+((env continue)
+ (env proc argl continue val)
+ ((save continue)
+  (save env)
+  (save continue)
+  (assign
+    proc
+    (op lookup-variable-value)
+    (const +)
+    (reg env))
+  (restore continue)
+  (restore env)
+  (restore continue)
+  (save continue)
+  (save proc)
+  (save env)
+  (save continue)
+  (assign val (const 1))
+  (restore continue)
+  (assign argl (op list) (reg val))
+  (restore env)
+  (save argl)
+  (save continue)
+  (assign val (const 1))
+  (restore continue)
+  (restore argl)
+  (assign argl (op cons) (reg val) (reg argl))
+  (restore proc)
+  (restore continue)
+  (test (op primitive-procedure?) (reg proc))
+  (branch (label primitive-branch4))
+  compiled-branch5
+  (assign continue (label after-call6))
+  (assign
+    val
+    (op compiled-procedure-entry)
+    (reg proc))
+  (goto (reg val))
+  primitive-branch4
+  (save continue)
+  (assign
+    val
+    (op apply-primitive-procedure)
+    (reg proc)
+    (reg argl))
+  (restore continue)
+  after-call6))
+#+end_example
+
+Compared with the preserving optimization enabled, all the save and restore instructions are unnecessary.
+
+**** Compare the code to that generated with the ~preserving~ mechanism intact.
+
+#+begin_src scheme :exports both :results output verbatim
+  (compiler-config 'preserving? #t)
+
+  (pretty-print
+   (compile
+    '(+ 1 1)
+    'val
+    'next))
+
+#+end_src
+
+#+RESULTS:
+#+begin_example
+((env)
+ (env proc argl continue val)
+ ((assign
+    proc
+    (op lookup-variable-value)
+    (const +)
+    (reg env))
+  (assign val (const 1))
+  (assign argl (op list) (reg val))
+  (assign val (const 1))
+  (assign argl (op cons) (reg val) (reg argl))
+  (test (op primitive-procedure?) (reg proc))
+  (branch (label primitive-branch7))
+  compiled-branch8
+  (assign continue (label after-call9))
+  (assign
+    val
+    (op compiled-procedure-entry)
+    (reg proc))
+  (goto (reg val))
+  primitive-branch7
+  (assign
+    val
+    (op apply-primitive-procedure)
+    (reg proc)
+    (reg argl))
+  after-call9))
+#+end_example
